@@ -8,7 +8,11 @@ import {
   MessageSquare, 
   Sparkles,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  BookOpen,
+  UploadCloud,
+  FileText,
+  Loader2
 } from "lucide-react";
 import styles from "./page.module.css";
 
@@ -24,10 +28,80 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState<"chat" | "documents">("chat");
+  interface UploadedFile {
+    name: string;
+    type: string;
+  }
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState("");
   
   const messageIdCounter = useRef(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const fetchFiles = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/api/files");
+      const data = await response.json();
+      if (data.files) {
+        setUploadedFiles(data.files);
+      }
+    } catch (error) {
+      console.error("Failed to fetch uploaded files:", error);
+    }
+  };
+
+  useEffect(() => {
+    let active = true;
+    fetch("http://localhost:8000/api/files")
+      .then((res) => res.json())
+      .then((data) => {
+        if (active && data.files) {
+          setUploadedFiles(data.files);
+        }
+      })
+      .catch((error) => console.error("Failed to fetch uploaded files:", error));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
+    
+    const file = fileList[0];
+    const formData = new FormData();
+    formData.append("file", file);
+    
+    setIsUploading(true);
+    setUploadMessage("");
+    
+    try {
+      const response = await fetch("http://localhost:8000/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      if (data.status === "success") {
+        setUploadMessage(`Success: Uploaded ${data.filename}!`);
+        await fetchFiles();
+      } else {
+        setUploadMessage("Failed: Upload failed.");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      setUploadMessage("Failed: Error connecting to backend.");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
 
   // Auto-scroll to bottom of messages
   useEffect(() => {
@@ -196,6 +270,23 @@ export default function Home() {
               <span>New Chat</span>
             </button>
             
+            <div className={styles.tabContainer}>
+              <button 
+                className={`${styles.tabBtn} ${activeTab === "chat" ? styles.activeTabBtn : ""}`} 
+                onClick={() => setActiveTab("chat")}
+              >
+                <MessageSquare size={14} />
+                <span>Chat</span>
+              </button>
+              <button 
+                className={`${styles.tabBtn} ${activeTab === "documents" ? styles.activeTabBtn : ""}`} 
+                onClick={() => setActiveTab("documents")}
+              >
+                <BookOpen size={14} />
+                <span>Documents</span>
+              </button>
+            </div>
+            
             <div className={styles.historySection}>
               <h4 className={styles.historyTitle}>Recent Clinical Queries</h4>
               {messages.length > 0 && (
@@ -238,107 +329,182 @@ export default function Home() {
             <span>OncoAgent Chat</span>
             <span className={styles.modelBadge}>Clinical-V2</span>
           </div>
-          <div style={{ display: "flex", gap: "12px" }}>
-            <span style={{ fontSize: "0.8rem", color: "#8a8a85" }}>Oncology Advisory</span>
-          </div>
         </header>
 
-        {/* Message Panel */}
-        <div className={styles.messagesList}>
-          {messages.length === 0 ? (
-            <div className={styles.welcomeContainer}>
-              <div className={styles.welcomeIcon}>Ω</div>
-              <h2 className={styles.welcomeTitle}>I am OncoAgent</h2>
-              <p className={styles.welcomeSubtitle}>
-                A specialized medical advisor companion trained in clinical oncology trial matching, targeted molecular variants, and immunotherapy guidelines.
-              </p>
-              
-              <div className={styles.promptGrid}>
-                {suggestions.map((s, idx) => (
-                  <button 
-                    key={idx} 
-                    className={styles.promptCard}
-                    onClick={() => handleSend(s.query)}
-                  >
-                    <span className={styles.promptCardTitle}>{s.title}</span>
-                    <span className={styles.promptCardDesc}>{s.desc}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            messages.map((m) => (
-              <div 
-                key={m.id} 
-                className={`${styles.messageWrapper} ${m.role === "user" ? styles.userMessageWrapper : ""}`}
-              >
-                {m.role === "assistant" && (
-                  <div className={`${styles.messageAvatar} ${styles.avatarAssistant}`}>Ω</div>
-                )}
-                
-                <div className={styles.messageContent}>
-                  {m.role === "user" ? (
-                    <div className={styles.userBubble}>{m.content}</div>
-                  ) : (
-                    <div className={styles.assistantBubble}>
-                      {renderFormattedContent(m.content)}
+        {activeTab === "chat" ? (
+          <>
+            {/* Message Panel */}
+            <div className={styles.messagesList}>
+              {messages.length === 0 ? (
+                <div className={styles.welcomeContainer}>
+                  <div className={styles.welcomeIcon}>Ω</div>
+                  <h2 className={styles.welcomeTitle}>I am OncoAgent</h2>
+                  <p className={styles.welcomeSubtitle}>
+                    A specialized medical advisor companion trained in clinical oncology trial matching, targeted molecular variants, and immunotherapy guidelines.
+                  </p>
+                  
+                  <div className={styles.promptGrid}>
+                    {suggestions.map((s, idx) => (
+                      <button 
+                        key={idx} 
+                        className={styles.promptCard}
+                        onClick={() => handleSend(s.query)}
+                      >
+                        <div className={styles.promptCardHeader}>
+                          <span className={styles.promptCardTitle}>{s.title}</span>
+                          <Sparkles size={12} className={styles.promptCardIcon} />
+                        </div>
+                        <p className={styles.promptCardDesc}>{s.desc}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className={styles.messagesContainer}>
+                  {messages.map((msg) => (
+                    <div 
+                      key={msg.id} 
+                      className={`${styles.messageWrapper} ${msg.role === "user" ? styles.userWrapper : styles.assistantWrapper}`}
+                    >
+                      <div className={`${styles.messageBubble} ${msg.role === "user" ? styles.userBubble : styles.assistantBubble}`}>
+                        {msg.role === "assistant" && (
+                          <div className={styles.assistantBadge}>OncoAgent</div>
+                        )}
+                        <div className={styles.messageContent}>
+                          {msg.role === "user" ? msg.content : renderFormattedContent(msg.content)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {isLoading && (
+                    <div className={`${styles.messageWrapper} ${styles.assistantWrapper}`}>
+                      <div className={`${styles.messageBubble} ${styles.assistantBubble}`}>
+                        <div className={styles.assistantBadge}>OncoAgent</div>
+                        <div className={styles.typing}>
+                          <div className={styles.dot}></div>
+                          <div className={styles.dot}></div>
+                          <div className={styles.dot}></div>
+                        </div>
+                      </div>
                     </div>
                   )}
+                  <div ref={messagesEndRef} />
                 </div>
+              )}
+            </div>
 
-                {m.role === "user" && (
-                  <div className={`${styles.messageAvatar} ${styles.avatarUser}`}>U</div>
-                )}
-              </div>
-            ))
-          )}
-
-          {isLoading && (
-            <div className={styles.messageWrapper}>
-              <div className={`${styles.messageAvatar} ${styles.avatarAssistant}`}>Ω</div>
-              <div className={styles.messageContent}>
-                <div className={styles.typing}>
-                  <div className={styles.dot}></div>
-                  <div className={styles.dot}></div>
-                  <div className={styles.dot}></div>
+            {/* Input box */}
+            <div className={styles.inputContainer}>
+              <div className={`${styles.inputWrapper} ${isFocused ? styles.inputWrapperFocused : ""}`}>
+                <textarea
+                  ref={textareaRef}
+                  className={styles.textarea}
+                  placeholder="Ask about lung mutations, clinical trial protocols, immunotherapies..."
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  disabled={isLoading}
+                  rows={1}
+                />
+                
+                <div className={styles.inputControls}>
+                  <button className={styles.attachmentBtn} title="Attach Clinical Notes">
+                    <Paperclip size={16} />
+                  </button>
+                  
+                  <button 
+                    className={styles.sendBtn} 
+                    onClick={() => handleSend()}
+                    disabled={isLoading || !inputValue.trim()}
+                  >
+                    <Send size={14} />
+                  </button>
                 </div>
               </div>
             </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+          </>
+        ) : (
+          /* Document Center Tab */
+          <div className={styles.docCenter}>
+            <div className={styles.docHeader}>
+              <h2 className={styles.docTitle}>Document Center</h2>
+              <p className={styles.docSubtitle}>
+                Upload clinical papers, molecular reports, or patient cohorts to index in the RAG vector storage.
+              </p>
+            </div>
 
-        {/* Input box */}
-        <div className={styles.inputContainer}>
-          <div className={`${styles.inputWrapper} ${isFocused ? styles.inputWrapperFocused : ""}`}>
-            <textarea
-              ref={textareaRef}
-              className={styles.textarea}
-              placeholder="Ask about lung mutations, clinical trial protocols, immunotherapies..."
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-              disabled={isLoading}
-              rows={1}
-            />
-            
-            <div className={styles.inputControls}>
-              <button className={styles.attachmentBtn} title="Attach Clinical Notes">
-                <Paperclip size={16} />
-              </button>
-              
-              <button 
-                className={styles.sendBtn} 
-                onClick={() => handleSend()}
-                disabled={isLoading || !inputValue.trim()}
-              >
-                <Send size={14} />
-              </button>
+            {/* Dropzone */}
+            <div className={styles.dropzone} onClick={() => fileInputRef.current?.click()}>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                style={{ display: "none" }} 
+                onChange={handleFileUpload} 
+              />
+              <div className={styles.dropzoneIcon}>
+                {isUploading ? <Loader2 style={{ animation: "spin 1s linear infinite" }} size={24} /> : <UploadCloud size={24} />}
+              </div>
+              <div>
+                <p className={styles.dropzoneText}>
+                  {isUploading ? "Uploading to RAG storage..." : "Click to select a file or drag & drop"}
+                </p>
+                <p className={styles.dropzoneSubtext}>
+                  Supports PDF, TXT, MD, DOCX (Max 20MB)
+                </p>
+              </div>
+            </div>
+
+            {uploadMessage && (
+              <div style={{ 
+                padding: "10px 16px", 
+                borderRadius: "8px", 
+                backgroundColor: uploadMessage.startsWith("Success") ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
+                color: uploadMessage.startsWith("Success") ? "#10b981" : "#ef4444",
+                fontSize: "0.85rem",
+                fontWeight: 500,
+                border: uploadMessage.startsWith("Success") ? "1px solid rgba(16, 185, 129, 0.2)" : "1px solid rgba(239, 68, 68, 0.2)"
+              }}>
+                {uploadMessage}
+              </div>
+            )}
+
+            {/* File List */}
+            <div className={styles.fileListSection}>
+              <h3 className={styles.sectionTitle}>Uploaded Reference Materials</h3>
+              {uploadedFiles.length === 0 ? (
+                <div className={styles.emptyState}>
+                  No documents uploaded yet. Add files above to build your local workspace cache.
+                </div>
+              ) : (
+                <div className={styles.fileList}>
+                  {uploadedFiles.map((file, idx) => (
+                    <div key={idx} className={styles.fileItem}>
+                      <div className={styles.fileInfo}>
+                        <FileText size={18} className={styles.fileIcon} />
+                        <span className={styles.fileName}>{file.name}</span>
+                        <span style={{ 
+                          fontSize: "0.7rem", 
+                          color: "#8a8a85",
+                          backgroundColor: "#262625",
+                          padding: "2px 8px",
+                          borderRadius: "4px",
+                          marginLeft: "12px",
+                          textTransform: "uppercase",
+                          fontWeight: 600,
+                          border: "1px solid #333332"
+                        }}>{file.type}</span>
+                      </div>
+                      <span className={styles.fileStatus}>Ready</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-        </div>
+        )}
       </main>
     </div>
   );
