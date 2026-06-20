@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f ../docker-compose.yml
+    kompose.version: 1.38.0 (HEAD)
+  labels:
+    io.kompose.service: langraph-orchestrator
+  name: langraph-orchestrator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: langraph-orchestrator
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f ../docker-compose.yml
+        kompose.version: 1.38.0 (HEAD)
+      labels:
+        io.kompose.service: langraph-orchestrator
+    spec:
+      containers:
+        - env:
+            - name: AGENTS_SERVICE_URL
+              value: http://agents-service:8002
+          image: cancer-agent-langraph-orchestrator
+          imagePullPolicy: Never
+          name: onco-langraph-orchestrator
+          ports:
+            - containerPort: 8001
+              protocol: TCP
+      restartPolicy: Always

@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f ../docker-compose.yml
+    kompose.version: 1.38.0 (HEAD)
+  labels:
+    io.kompose.service: agents-service
+  name: agents-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: agents-service
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f ../docker-compose.yml
+        kompose.version: 1.38.0 (HEAD)
+      labels:
+        io.kompose.service: agents-service
+    spec:
+      containers:
+        - env:
+            - name: OPENAI_API_KEY
+              value: "YOUR_OPENAI_API_KEY_HERE"
+            - name: TOOLS_SERVICE_URL
+              value: http://tools-service:8003
+          image: cancer-agent-agents-service
+          imagePullPolicy: Never
+          name: onco-agents-service
+          ports:
+            - containerPort: 8002
+              protocol: TCP
+      restartPolicy: Always

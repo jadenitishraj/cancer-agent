@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f ../docker-compose.yml
+    kompose.version: 1.38.0 (HEAD)
+  labels:
+    io.kompose.service: backend-gateway
+  name: backend-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: backend-gateway
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f ../docker-compose.yml
+        kompose.version: 1.38.0 (HEAD)
+      labels:
+        io.kompose.service: backend-gateway
+    spec:
+      containers:
+        - env:
+            - name: ORCHESTRATOR_URL
+              value: http://langraph-orchestrator:8001
+            - name: RAG_SERVICE_URL
+              value: http://rag-service:8004
+          image: cancer-agent-backend-gateway
+          imagePullPolicy: Never
+          name: onco-backend-gateway
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+      restartPolicy: Always

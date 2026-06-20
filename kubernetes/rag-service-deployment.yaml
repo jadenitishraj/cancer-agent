@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f ../docker-compose.yml
+    kompose.version: 1.38.0 (HEAD)
+  labels:
+    io.kompose.service: rag-service
+  name: rag-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: rag-service
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f ../docker-compose.yml
+        kompose.version: 1.38.0 (HEAD)
+      labels:
+        io.kompose.service: rag-service
+    spec:
+      containers:
+        - env:
+            - name: CHROMA_HOST
+              value: chromadb
+            - name: CHROMA_PORT
+              value: "8500"
+            - name: OPENAI_API_KEY
+              value: "YOUR_OPENAI_API_KEY_HERE"
+          image: cancer-agent-rag-service
+          imagePullPolicy: Never
+          name: onco-rag-service
+          ports:
+            - containerPort: 8004
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /app/files
+              name: rag-files
+      restartPolicy: Always
+      volumes:
+        - name: rag-files
+          persistentVolumeClaim:
+            claimName: rag-files

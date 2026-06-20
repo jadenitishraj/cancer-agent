@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f ../docker-compose.yml
+    kompose.version: 1.38.0 (HEAD)
+  labels:
+    io.kompose.service: chromadb
+  name: chromadb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: chromadb
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f ../docker-compose.yml
+        kompose.version: 1.38.0 (HEAD)
+      labels:
+        io.kompose.service: chromadb
+    spec:
+      containers:
+        - env:
+            - name: ANONYMIZED_TELEMETRY
+              value: "FALSE"
+            - name: IS_PERSISTENT
+              value: "TRUE"
+            - name: PERSIST_DIRECTORY
+              value: /chroma/chroma
+          image: chromadb/chroma:latest
+          livenessProbe:
+            exec:
+              command:
+                - bash -c 'echo > /dev/tcp/localhost/8000' || exit 1
+            failureThreshold: 10
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
+          name: onco-chromadb
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /chroma/chroma
+              name: chroma-data
+      restartPolicy: Always
+      volumes:
+        - name: chroma-data
+          persistentVolumeClaim:
+            claimName: chroma-data
