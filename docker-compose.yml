@@ -1,0 +1,97 @@
+version: "3.9"
+
+services:
+  # ────────────── ChromaDB (Vector Database) ──────────────
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: onco-chromadb
+    ports:
+      - "8500:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+      - ANONYMIZED_TELEMETRY=FALSE
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8000' || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ────────────── RAG Service (Parsing, Chunking, Vector Store) ──────────────
+  rag-service:
+    build: ./rag-service
+    container_name: onco-rag-service
+    ports:
+      - "8004:8004"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+    depends_on:
+      chromadb:
+        condition: service_healthy
+    volumes:
+      - rag_files:/app/files
+
+  # ────────────── Tools Service (Tool Execution) ──────────────
+  tools-service:
+    build: ./tools-service
+    container_name: onco-tools-service
+    ports:
+      - "8003:8003"
+    environment:
+      - RAG_SERVICE_URL=http://rag-service:8004
+    depends_on:
+      - rag-service
+
+  # ────────────── Agents Service (Advisor + Critic LLM Agents) ──────────────
+  agents-service:
+    build: ./agents-service
+    container_name: onco-agents-service
+    ports:
+      - "8002:8002"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - TOOLS_SERVICE_URL=http://tools-service:8003
+    depends_on:
+      - tools-service
+
+  # ────────────── LangGraph Orchestrator (Workflow Engine) ──────────────
+  langraph-orchestrator:
+    build: ./langraph-orchestrator
+    container_name: onco-langraph-orchestrator
+    ports:
+      - "8001:8001"
+    environment:
+      - AGENTS_SERVICE_URL=http://agents-service:8002
+    depends_on:
+      - agents-service
+
+  # ────────────── Backend Gateway (Public API) ──────────────
+  backend-gateway:
+    build: ./backend-gateway
+    container_name: onco-backend-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - ORCHESTRATOR_URL=http://langraph-orchestrator:8001
+      - RAG_SERVICE_URL=http://rag-service:8004
+    depends_on:
+      - langraph-orchestrator
+      - rag-service
+
+  # ────────────── Frontend (Next.js UI) ──────────────
+  frontend:
+    build: ./frontend
+    container_name: onco-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend-gateway
+
+volumes:
+  chroma_data:
+  rag_files:
