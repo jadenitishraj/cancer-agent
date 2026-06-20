@@ -24,8 +24,8 @@ spec:
         - env:
             - name: AGENTS_SERVICE_URL
               value: http://agents-service:8002
-          image: cancer-agent-langraph-orchestrator
-          imagePullPolicy: Never
+          image: 455254973218.dkr.ecr.us-east-1.amazonaws.com/cancer-agent-langraph-orchestrator:latest
+          imagePullPolicy: Always
           name: onco-langraph-orchestrator
           ports:
             - containerPort: 8001

@@ -5,6 +5,7 @@ metadata:
     io.kompose.service: chroma-data
   name: chroma-data
 spec:
+  storageClassName: gp2
   accessModes:
     - ReadWriteOnce
   resources:

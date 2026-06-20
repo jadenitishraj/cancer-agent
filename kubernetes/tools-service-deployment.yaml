@@ -24,8 +24,8 @@ spec:
         - env:
             - name: RAG_SERVICE_URL
               value: http://rag-service:8004
-          image: cancer-agent-tools-service
-          imagePullPolicy: Never
+          image: 455254973218.dkr.ecr.us-east-1.amazonaws.com/cancer-agent-tools-service:latest
+          imagePullPolicy: Always
           name: onco-tools-service
           ports:
             - containerPort: 8003

@@ -26,8 +26,8 @@ spec:
               value: "YOUR_OPENAI_API_KEY_HERE"
             - name: TOOLS_SERVICE_URL
               value: http://tools-service:8003
-          image: cancer-agent-agents-service
-          imagePullPolicy: Never
+          image: 455254973218.dkr.ecr.us-east-1.amazonaws.com/cancer-agent-agents-service:latest
+          imagePullPolicy: Always
           name: onco-agents-service
           ports:
             - containerPort: 8002

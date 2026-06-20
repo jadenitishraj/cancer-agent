@@ -44,7 +44,7 @@ export default function Home() {
 
   const fetchFiles = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/files");
+      const response = await fetch("/api/files");
       const data = await response.json();
       if (data.files) {
         setUploadedFiles(data.files);
@@ -56,7 +56,7 @@ export default function Home() {
 
   useEffect(() => {
     let active = true;
-    fetch("http://localhost:8000/api/files")
+    fetch("/api/files")
       .then((res) => res.json())
       .then((data) => {
         if (active && data.files) {
@@ -81,7 +81,7 @@ export default function Home() {
     setUploadMessage("");
     
     try {
-      const response = await fetch("http://localhost:8000/api/upload", {
+      const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
       });
@@ -134,7 +134,7 @@ export default function Home() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/chat", {
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

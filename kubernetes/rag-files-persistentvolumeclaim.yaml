@@ -5,6 +5,7 @@ metadata:
     io.kompose.service: rag-files
   name: rag-files
 spec:
+  storageClassName: gp2
   accessModes:
     - ReadWriteOnce
   resources:
