@@ -23,7 +23,10 @@ spec:
       containers:
         - env:
             - name: OPENAI_API_KEY
-              value: "YOUR_OPENAI_API_KEY_HERE"
+              valueFrom:
+                secretKeyRef:
+                  name: openai-secret
+                  key: openai-api-key
             - name: TOOLS_SERVICE_URL
               value: http://tools-service:8003
           image: 455254973218.dkr.ecr.us-east-1.amazonaws.com/cancer-agent-agents-service:latest

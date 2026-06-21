@@ -29,7 +29,10 @@ spec:
             - name: CHROMA_PORT
               value: "8500"
             - name: OPENAI_API_KEY
-              value: "YOUR_OPENAI_API_KEY_HERE"
+              valueFrom:
+                secretKeyRef:
+                  name: openai-secret
+                  key: openai-api-key
           image: 455254973218.dkr.ecr.us-east-1.amazonaws.com/cancer-agent-rag-service:latest
           imagePullPolicy: Always
           name: onco-rag-service
