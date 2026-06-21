@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>From Laptop to Cloud — Docker, Kubernetes &amp; EKS Masterclass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,800;9..144,900&family=JetBrains+Mono:wght@400;500;700&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#09090e;
+  --ink:#f4f1ea;
+  --ink-dim:#aba7b9;
+  --ink-faint:#5f5a72;
+  --sky:#0ea5e9;
+  --emerald:#10b981;
+  --indigo:#6366f1;
+  --violet:#8b5cf6;
+  --amber:#f59e0b;
+  --rose:#f43f5e;
+  --card-bg:rgba(255,255,255,.03);
+  --card-border:rgba(255,255,255,.08);
+  --panel:rgba(255,255,255,.02);
+  --accent:#8b5cf6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter Tight',sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  line-height:1.6;
+  overflow-x:hidden;
+  background-color:#08080c;
+  background-image:
+    radial-gradient(circle at 15% 50%, rgba(139,92,246,.08), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(99,102,241,.08), transparent 25%);
+  background-attachment:fixed;
+}
+.container{max-width:1180px;margin:0 auto;padding:0 32px;position:relative;z-index:2}
+.display{font-family:'Fraunces',serif;font-weight:900;letter-spacing:-.04em;line-height:.95}
+.label{font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.18em;font-size:11px;color:var(--ink-dim)}
+
+/* hero */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:80px 0 60px;position:relative}
+.hero .stage-num{font-family:'Fraunces',serif;font-style:italic;font-weight:300;font-size:14px;color:var(--ink-faint);margin-bottom:24px}
+.hero h1{
+  font-size:clamp(46px,8.6vw,98px);
+  margin-bottom:30px;
+  background:linear-gradient(135deg,var(--violet),var(--indigo),var(--sky));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--ink);-webkit-text-fill-color:var(--ink)}
+.hero .sub{font-size:clamp(18px,2.2vw,23px);max-width:880px;color:var(--ink-dim);margin-bottom:52px;font-weight:300}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;max-width:1040px}
+.stat{border-left:2px solid var(--card-border);padding-left:16px}
+.stat .num{font-family:'Fraunces',serif;font-size:34px;font-weight:800;letter-spacing:-.03em}
+.stat .label{margin-top:4px}
+.scroll-hint{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);color:var(--ink-faint);font-size:11px;letter-spacing:.3em;text-transform:uppercase;animation:bob 2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,8px)}}
+
+/* tabs */
+.tabs{position:sticky;top:0;z-index:50;background:rgba(8,8,12,.91);backdrop-filter:blur(14px);border-bottom:1px solid var(--card-border);padding:14px 0}
+.tabs-inner{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.tab-btn{font:600 11.5px 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:10px 12px;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:4px;color:var(--ink-dim);cursor:pointer;transition:all .2s}
+.tab-btn:hover{color:var(--ink);background:rgba(255,255,255,.055)}
+.tab-btn.active{color:#fff;border-color:var(--accent);background:color-mix(in srgb,var(--accent) 22%,transparent)}
+.tab-panel{display:none}
+.tab-panel.active{display:block;animation:fadeIn .35s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* stage */
+.stage{padding:72px 0 88px;border-top:1px solid var(--card-border)}
+.stage-header{display:grid;grid-template-columns:80px 1fr;gap:24px;margin-bottom:40px;align-items:start}
+.stage-num-big{font-family:'Fraunces',serif;font-style:italic;font-size:64px;line-height:1;color:var(--accent);font-weight:300}
+.stage-title{font-family:'Fraunces',serif;font-weight:800;font-size:clamp(30px,4.6vw,48px);letter-spacing:-.03em;line-height:1.05;margin-bottom:12px}
+.stage-kicker{font-size:17px;color:var(--ink-dim);font-weight:300;max-width:870px}
+
+/* body content */
+.body-wrap{display:grid;grid-template-columns:80px 1fr;gap:24px}
+.body-wrap .spacer{}
+.prose{max-width:880px}
+.prose h3{font-family:'Fraunces',serif;font-weight:800;font-size:25px;letter-spacing:-.02em;margin:36px 0 14px;color:var(--ink)}
+.prose h3:first-child{margin-top:0}
+.prose h4{font:700 12px 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:30px 0 12px}
+.prose p{font-size:16.5px;color:var(--ink-dim);font-weight:300;line-height:1.72;margin-bottom:15px}
+.prose p strong{color:var(--ink);font-weight:600}
+.prose ul{list-style:none;margin:6px 0 18px}
+.prose li{font-size:16px;color:var(--ink-dim);font-weight:300;line-height:1.65;padding-left:22px;position:relative;margin-bottom:9px}
+.prose li::before{content:"→";position:absolute;left:0;color:var(--accent);font-weight:700}
+.prose li strong{color:var(--ink);font-weight:600}
+code.inl{font-family:'JetBrains Mono',monospace;font-size:13.5px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.22);border-radius:4px;padding:2px 6px;color:#d6ccff}
+
+/* callouts */
+.callout{border-radius:8px;padding:18px 20px;margin:22px 0;border:1px solid;backdrop-filter:blur(8px);font-size:15.5px;font-weight:300;line-height:1.65}
+.callout .co-tag{font:700 10px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px;display:block}
+.callout p{margin:0 0 8px;font-size:15.5px;color:var(--ink-dim)}
+.callout p:last-child{margin-bottom:0}
+.callout strong{color:var(--ink);font-weight:600}
+.co-trap{background:rgba(244,63,94,.07);border-color:rgba(244,63,94,.3)}
+.co-trap .co-tag{color:var(--rose)}
+.co-note{background:rgba(14,165,233,.06);border-color:rgba(14,165,233,.28)}
+.co-note .co-tag{color:var(--sky)}
+.co-cost{background:rgba(245,158,11,.07);border-color:rgba(245,158,11,.3)}
+.co-cost .co-tag{color:var(--amber)}
+.co-win{background:rgba(16,185,129,.06);border-color:rgba(16,185,129,.28)}
+.co-win .co-tag{color:var(--emerald)}
+
+/* vocab cards */
+.vocab-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:18px 0 8px}
+.vocab{background:var(--card-bg);border:1px solid var(--card-border);border-left:3px solid var(--accent);border-radius:6px;padding:16px 18px}
+.vocab .vt{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13.5px;color:#d6ccff;margin-bottom:6px}
+.vocab .vd{font-size:14.5px;color:var(--ink-dim);font-weight:300;line-height:1.55}
+
+/* code card (opens modal) */
+.code-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:20px 0}
+.code-card{display:flex;align-items:center;gap:13px;background:rgba(13,13,20,.7);border:1px solid var(--card-border);border-left:3px solid var(--sky);border-radius:6px;padding:16px 18px;cursor:pointer;transition:all .18s}
+.code-card:hover{background:rgba(255,255,255,.05);transform:translateY(-2px);border-left-color:var(--violet)}
+.code-card .cc-ico{font:700 14px 'JetBrains Mono',monospace;color:var(--sky);flex:0 0 auto}
+.code-card .cc-t{font-size:15px;color:var(--ink);font-weight:500;line-height:1.3}
+.code-card .cc-s{font:600 10px 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:2px}
+.code-card .cc-go{margin-left:auto;font:700 10px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);flex:0 0 auto}
+.code-card:hover .cc-go{color:var(--violet)}
+
+/* inline code block */
+.codeblock{background:#0c0c13;border:1px solid var(--card-border);border-radius:8px;margin:18px 0;overflow:hidden}
+.codeblock .cb-head{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--card-border);background:rgba(255,255,255,.015)}
+.codeblock .cb-title{font:700 10.5px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+.codeblock pre{margin:0;padding:16px 18px;overflow-x:auto}
+.codeblock code{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;color:#cfd3e0;white-space:pre}
+.cmt{color:#6a6a85}
+.kw{color:#c4b5fd}
+.str{color:#7fd4a0}
+.flg{color:#7cc5f0}
+
+/* comparison table */
+.cmp{width:100%;border-collapse:collapse;margin:20px 0;font-size:14.5px}
+.cmp th,.cmp td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--card-border)}
+.cmp th{font:700 10.5px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+.cmp td{color:var(--ink-dim);font-weight:300}
+.cmp td:first-child{color:var(--ink);font-weight:500}
+.cmp tr:hover td{background:rgba(255,255,255,.02)}
+.yes{color:var(--emerald);font-weight:600}
+.no{color:var(--rose);font-weight:600}
+
+/* diagram */
+.diagram{background:rgba(13,13,20,.6);border:1px solid var(--card-border);border-radius:10px;padding:26px 22px;margin:22px 0}
+.diagram .dg-cap{font:700 10px 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);text-align:center;margin-top:16px}
+.flow{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px}
+.node{background:color-mix(in srgb,var(--accent) 14%,transparent);border:1px solid color-mix(in srgb,var(--accent) 34%,transparent);border-radius:6px;padding:11px 15px;font:600 13px 'Inter Tight',sans-serif;color:var(--ink);text-align:center;min-width:96px}
+.node.sky{background:rgba(14,165,233,.13);border-color:rgba(14,165,233,.34)}
+.node.em{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.32)}
+.node.am{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.32)}
+.arrow{color:var(--ink-faint);font-size:18px}
+.box-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.mbox{flex:1;min-width:150px;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:8px;padding:14px;text-align:center}
+.mbox .mb-t{font:700 11px 'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.mbox .mb-d{font-size:13px;color:var(--ink-dim);font-weight:300}
+
+/* modal */
+.modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(4,4,8,.82);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:24px}
+.modal-overlay.open{display:flex;animation:fadeIn .25s ease}
+.modal{
+  max-width:820px;width:100%;max-height:88vh;overflow-y:auto;
+  background:#0b0b12;border:1px solid color-mix(in srgb,var(--accent) 34%,var(--card-border));
+  border-radius:10px;padding:34px 36px 30px;position:relative;
+  box-shadow:0 30px 90px rgba(0,0,0,.65);
+}
+.modal .m-cat{font:700 11px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+.modal .m-q{font-family:'Fraunces',serif;font-weight:800;font-size:26px;line-height:1.15;letter-spacing:-.02em;margin-bottom:6px}
+.modal .m-hint{font:600 10px 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:20px}
+.modal .m-body{font-size:15.5px;color:var(--ink-dim);font-weight:300;line-height:1.68}
+.modal .m-body p{margin-bottom:13px}
+.modal .m-body strong{color:var(--ink);font-weight:600}
+.modal .codeblock{margin:14px 0}
+.modal-close{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;border:1px solid var(--card-border);background:rgba(255,255,255,.04);color:var(--ink-dim);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:2}
+.modal-close:hover{color:#fff;border-color:var(--accent);background:color-mix(in srgb,var(--accent) 20%,transparent)}
+
+.foot{padding:56px 0 80px;text-align:center;border-top:1px solid var(--card-border);color:var(--ink-faint);font-size:14px}
+
+@media(max-width:900px){
+  .stats,.vocab-grid,.code-cards{grid-template-columns:1fr}
+  .stage-header,.body-wrap{grid-template-columns:1fr}
+  .body-wrap .spacer{display:none}
+  .modal{padding:28px 22px 24px}
+  .cmp{font-size:13px}
+  .cmp th,.cmp td{padding:10px 10px}
+}
+</style>
+</head>
+<body style="--accent:var(--violet)">
+
+<section class="hero">
+  <div class="container">
+    <div class="stage-num">A deployment masterclass — built from a real project: OncoAgent, a multi-service AI app</div>
+    <h1 class="display">From <em>Laptop</em><br>to <em>Cloud</em></h1>
+    <p class="sub">The full journey of putting a real app online — starting simple with S3 + EC2, then Docker, then Kubernetes on your laptop with minikube, and finally AWS EKS. Every concept in plain English, every command you need, and the real bugs we hit along the way. Read top to bottom and you'll understand deployment end to end.</p>
+    <div class="stats">
+      <div class="stat"><div class="num">11</div><div class="label">stages</div></div>
+      <div class="stat"><div class="num">7</div><div class="label">services deployed</div></div>
+      <div class="stat"><div class="num">30+</div><div class="label">code snippets</div></div>
+      <div class="stat"><div class="num">click</div><div class="label">cards for full code</div></div>
+    </div>
+  </div>
+  <div class="scroll-hint">Pick a stage</div>
+</section>
+
+<nav class="tabs">
+  <div class="container">
+    <div class="tabs-inner" id="tabBar"></div>
+  </div>
+</nav>
+
+<main id="main"></main>
+
+<div class="foot container">Teaching note — go slow on Stage 06 (Kubernetes concepts). If the class gets pods, deployments, and services, everything else is just "where does it run." Good luck.</div>
+
+<div class="modal-overlay" id="overlay">
+  <div class="modal" id="modal">
+    <button class="modal-close" id="closeBtn" aria-label="Close">&times;</button>
+    <div class="m-cat" id="mCat"></div>
+    <div class="m-q" id="mQ"></div>
+    <div class="m-hint" id="mHint">Copy &amp; run — explained line by line</div>
+    <div class="m-body" id="mBody"></div>
+  </div>
+</div>
+
+<script>
+// ============ CODE SNIPPET LIBRARY (opened in modals) ============
+const SNIPPETS = {
+  docker_install: {
+    cat:"Docker · Setup", title:"Install Docker on a Mac",
+    body:`<p>Docker Desktop gives you the engine plus the <code class="inl">docker</code> command. On a Mac the cleanest install is Homebrew.</p>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">terminal · macOS</span></div><pre><code><span class="cmt"># install Docker Desktop</span>
+brew install <span class="str">--cask</span> docker
+
+<span class="cmt"># start the app (engine must be running)</span>
+open <span class="flg">-a</span> Docker
+
+<span class="cmt"># confirm it works</span>
+docker <span class="flg">--version</span>
+docker ps        <span class="cmt"># lists running containers (empty is fine)</span></code></pre></div>
+    <p>If <code class="inl">docker ps</code> returns a table header with no errors, the engine is running and you're ready.</p>`
+  },
+  docker_basics: {
+    cat:"Docker · Core commands", title:"The Docker commands you actually use",
+    body:`<div class="codeblock"><div class="cb-head"><span class="cb-title">terminal</span></div><pre><code><span class="cmt"># build an image from a Dockerfile in current folder</span>
+docker build <span class="flg">-t</span> my-app:latest .
+
+<span class="cmt"># run a container from an image, map port 8000</span>
+docker run <span class="flg">-p</span> 8000:8000 my-app:latest
+
+<span class="cmt"># list images you have locally</span>
+docker images
+
+<span class="cmt"># list running containers</span>
+docker ps
+
+<span class="cmt"># see logs of a container (debugging)</span>
+docker logs &lt;container-id&gt;
+
+<span class="cmt"># stop everything from a compose file</span>
+docker compose down</code></pre></div>
+    <p><strong>build</strong> makes an image. <strong>run</strong> turns an image into a live container. <strong>logs</strong> is your first stop whenever something breaks.</p>`
+  },
+  dockerfile: {
+    cat:"Docker · Dockerfile", title:"A real Dockerfile (FastAPI service)",
+    body:`<p>A Dockerfile is the recipe for one image. This is the pattern every Python service in OncoAgent used.</p>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">Dockerfile</span></div><pre><code><span class="kw">FROM</span> python:3.11-slim
+
+<span class="kw">WORKDIR</span> /app
+
+<span class="cmt"># install deps first (better layer caching)</span>
+<span class="kw">COPY</span> requirements.txt .
+<span class="kw">RUN</span> pip install --no-cache-dir -r requirements.txt
+
+<span class="cmt"># copy the rest of the code</span>
+<span class="kw">COPY</span> . .
+
+<span class="cmt"># the port this service listens on</span>
+<span class="kw">EXPOSE</span> 8000
+
+<span class="cmt"># start the live server</span>
+<span class="kw">CMD</span> ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]</code></pre></div>
+    <div class="callout co-trap"><span class="co-tag">Trap</span><p>Always bind to <strong>0.0.0.0</strong>, not <strong>127.0.0.1</strong>. Inside a container, 127.0.0.1 means "only me" and outside traffic gets refused — exactly the <code class="inl">ERR_CONNECTION_RESET</code> we hit on the frontend.</p></div>`
+  },
+  compose: {
+    cat:"Docker · Compose", title:"docker-compose.yml — many services at once",
+    body:`<p>Compose runs all your services together with one command. Services reach each other by their <strong>name</strong> (e.g. <code class="inl">http://rag-service:8004</code>).</p>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">docker-compose.yml (trimmed)</span></div><pre><code><span class="kw">services</span>:
+  frontend:
+    build: ./frontend
+    ports: ["3000:3000"]
+
+  backend-gateway:
+    build: ./backend-gateway
+    ports: ["8000:8000"]
+
+  rag-service:
+    build: ./rag-service
+    ports: ["8004:8004"]
+    environment:
+      CHROMA_HOST: chromadb
+      CHROMA_PORT: 8000
+
+  chromadb:
+    image: chromadb/chroma
+    ports: ["8500:8000"]</code></pre></div>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">terminal</span></div><pre><code><span class="cmt"># build + start everything in the background</span>
+docker compose up <span class="flg">-d</span> --build
+
+<span class="cmt"># open the app</span>
+<span class="cmt"># http://localhost:3000</span></code></pre></div>`
+  },
+  kompose: {
+    cat:"Kubernetes · Conversion", title:"kompose — compose → Kubernetes YAML",
+    body:`<p>Kubernetes can't read docker-compose. <strong>kompose</strong> converts it into a Deployment + Service for each of your services automatically.</p>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">terminal · macOS</span></div><pre><code><span class="cmt"># install</span>
+brew install kompose
+
+<span class="cmt"># convert (run where docker-compose.yml lives)</span>
+mkdir kubernetes && cd kubernetes
+kompose convert <span class="flg">-f</span> ../docker-compose.yml</code></pre></div>
+    <p>This generates files like <code class="inl">rag-service-deployment.yaml</code> and <code class="inl">rag-service-service.yaml</code> for all 7 components. You then review and fix them (next snippets).</p>`
+  },
+  minikube_run: {
+    cat:"Kubernetes · minikube", title:"Run Kubernetes locally — full sequence",
+    body:`<p>minikube is real Kubernetes on one machine. Here's the exact order that works for a multi-service app.</p>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">terminal</span></div><pre><code><span class="cmt"># 1. install</span>
+brew install minikube kubectl
+
+<span class="cmt"># 2. start a cluster with enough resources for 7 services</span>
+minikube start --cpus=4 --memory=7000
+
+<span class="cmt"># 3. THE KEY LINE — point docker at minikube's own engine</span>
+eval $(minikube docker-env)
+
+<span class="cmt"># 4. rebuild images so minikube can SEE them</span>
+docker compose build
+
+<span class="cmt"># 5. deploy all manifests</span>
+kubectl apply <span class="flg">-f</span> kubernetes/
+
+<span class="cmt"># 6. watch pods until Running</span>
+kubectl get pods
+
+<span class="cmt"># 7. open the frontend in browser</span>
+minikube service frontend</code></pre></div>
+    <div class="callout co-trap"><span class="co-tag">The #1 trap</span><p>Skip <strong>eval $(minikube docker-env)</strong> and your pods fail with <code class="inl">ImagePullBackOff</code> / <code class="inl">ErrImageNeverPull</code> — minikube looks in its own image store and can't find your local build.</p></div>`
+  },
+  kubectl_basics: {
+    cat:"Kubernetes · kubectl", title:"kubectl — the universal control command",
+    body:`<p>The same <code class="inl">kubectl</code> works on minikube and on EKS. Only the cluster it points at changes.</p>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">terminal</span></div><pre><code>kubectl get pods                 <span class="cmt"># list pods + status</span>
+kubectl get pods <span class="flg">-w</span>              <span class="cmt"># live-watch until Running</span>
+kubectl get svc                  <span class="cmt"># services + LoadBalancer URLs</span>
+kubectl get nodes                <span class="cmt"># the machines in the cluster</span>
+
+kubectl logs &lt;pod-name&gt;          <span class="cmt"># WHY a pod crashed</span>
+kubectl describe pod &lt;pod-name&gt;  <span class="cmt"># events, scheduling problems</span>
+
+kubectl apply <span class="flg">-f</span> kubernetes/     <span class="cmt"># deploy / update everything</span>
+kubectl rollout restart deployment/rag-service  <span class="cmt"># restart a service</span>
+kubectl scale deployment/frontend --replicas=3  <span class="cmt"># run 3 copies</span></code></pre></div>
+    <p><strong>logs</strong> and <strong>describe</strong> are 90% of debugging. When something is wrong, read the logs first — don't guess.</p>`
+  },
+  k8s_deployment: {
+    cat:"Kubernetes · Manifest", title:"A Deployment + Service YAML (explained)",
+    body:`<p>The <strong>Deployment</strong> says "run my container, keep N copies alive." The <strong>Service</strong> gives those pods a stable name other services can call.</p>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">rag-service-deployment.yaml</span></div><pre><code><span class="kw">apiVersion</span>: apps/v1
+<span class="kw">kind</span>: Deployment
+<span class="kw">metadata</span>:
+  name: rag-service
+<span class="kw">spec</span>:
+  replicas: 1
+  selector:
+    matchLabels: { app: rag-service }
+  template:
+    metadata:
+      labels: { app: rag-service }
+    spec:
+      containers:
+        - name: rag-service
+          image: rag-service:latest   <span class="cmt"># local (minikube)</span>
+          imagePullPolicy: Never       <span class="cmt"># minikube ONLY</span>
+          ports:
+            - containerPort: 8004
+          env:
+            - name: CHROMA_HOST
+              value: "chromadb"
+            - name: CHROMA_PORT
+              value: "8500"            <span class="cmt"># K8s service port!</span></code></pre></div>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">rag-service-service.yaml</span></div><pre><code><span class="kw">apiVersion</span>: v1
+<span class="kw">kind</span>: Service
+<span class="kw">metadata</span>:
+  name: rag-service        <span class="cmt"># &lt;-- the DNS name others call</span>
+<span class="kw">spec</span>:
+  selector: { app: rag-service }
+  ports:
+    - port: 8004
+      targetPort: 8004</code></pre></div>`
+  },
+  ecr_push: {
+    cat:"AWS · ECR", title:"Push all images to ECR (the loop)",
+    body:`<p>EKS can't see your laptop. Every image must live in ECR first. This loop creates a repo and pushes each service.</p>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">push_to_ecr.sh</span></div><pre><code>ACCT=455254973218
+REGION=us-east-1
+REG=$ACCT.dkr.ecr.$REGION.amazonaws.com
+
+<span class="cmt"># log docker into ECR</span>
+aws ecr get-login-password --region $REGION \\
+  | docker login --username AWS --password-stdin $REG
+
+SERVICES=<span class="str">"frontend backend-gateway langraph-orchestrator \\
+          agents-service tools-service rag-service"</span>
+
+<span class="kw">for</span> s <span class="kw">in</span> $SERVICES; <span class="kw">do</span>
+  aws ecr create-repository --repository-name cancer-agent-$s \\
+      --region $REGION 2&gt;/dev/null
+  docker tag cancer-agent-$s:latest $REG/cancer-agent-$s:latest
+  docker push $REG/cancer-agent-$s:latest
+<span class="kw">done</span></code></pre></div>
+    <div class="callout co-cost"><span class="co-tag">Cost</span><p><strong>Pushing is free.</strong> Storage is ~$0.10/GB/month (a few cents for a demo). Pulling within the same region is free — which is why your cluster and ECR must share a region.</p></div>`
+  },
+  eks_create: {
+    cat:"AWS · EKS", title:"Create the EKS cluster",
+    body:`<p>One command builds the whole cluster (control plane + worker nodes + networking). Takes ~15–20 min.</p>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">terminal</span></div><pre><code><span class="cmt"># install eksctl</span>
+brew install eksctl
+
+<span class="cmt"># build the cluster</span>
+eksctl create cluster \\
+  --name onco-cluster \\
+  --region us-east-1 \\
+  --nodes 2 \\
+  --node-type t3.medium
+
+<span class="cmt"># eksctl auto-points kubectl at EKS. verify:</span>
+kubectl get nodes</code></pre></div>
+    <div class="callout co-note"><span class="co-tag">Note</span><p>If you used the console's <strong>Auto Mode</strong> instead, connect with:<br><code class="inl">aws eks update-kubeconfig --name onco-cluster --region us-east-1</code></p></div>`
+  },
+  eks_deploy: {
+    cat:"AWS · EKS", title:"Deploy to EKS — what changes from minikube",
+    body:`<p>The YAML is almost identical. Only two things change for the cloud.</p>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">change 1 · image + pull policy</span></div><pre><code><span class="cmt"># minikube</span>
+image: rag-service:latest
+imagePullPolicy: Never
+
+<span class="cmt"># EKS — full ECR URL, remove Never</span>
+image: 455254973218.dkr.ecr.us-east-1.amazonaws.com/cancer-agent-rag-service:latest
+imagePullPolicy: Always</code></pre></div>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">change 2 · frontend service type</span></div><pre><code><span class="kw">spec</span>:
+  type: LoadBalancer   <span class="cmt"># AWS gives a public URL</span>
+  selector: { app: frontend }
+  ports:
+    - port: 3000
+      targetPort: 3000</code></pre></div>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">deploy (same commands as minikube)</span></div><pre><code>kubectl apply <span class="flg">-f</span> kubernetes/
+kubectl get pods <span class="flg">-w</span>
+kubectl get svc frontend   <span class="cmt"># grab EXTERNAL-IP = your public URL</span></code></pre></div>`
+  },
+  eks_storage: {
+    cat:"AWS · EKS", title:"Fix: databases stuck in Pending (EBS storage)",
+    body:`<p>On a fresh EKS cluster, pods with volumes (ChromaDB, RAG files) sit in <strong>Pending</strong> because the EBS storage driver isn't installed. This was a real blocker.</p>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">terminal</span></div><pre><code><span class="cmt"># 1. use the gp2 storage class in your PVC</span>
+<span class="cmt">#    storageClassName: gp2</span>
+
+<span class="cmt"># 2. install the EBS CSI driver + permissions</span>
+eksctl utils associate-iam-oidc-provider \\
+  --region=us-east-1 --cluster=onco-cluster --approve
+
+eksctl create addon --name aws-ebs-csi-driver \\
+  --cluster onco-cluster --force</code></pre></div>
+    <p>After this, AWS auto-creates the cloud disks and the database pods move to <strong>Running</strong>.</p>`
+  },
+  eks_secret: {
+    cat:"AWS · EKS", title:"Inject a secret (API key) safely",
+    body:`<p>Never commit secrets to Git or YAML. We stripped the OpenAI key from the manifests (GitHub blocked the push) and injected it straight into the running cluster instead.</p>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">terminal</span></div><pre><code><span class="cmt"># set the env var on the running deployment (not in any file)</span>
+kubectl set env deployment/agents-service \\
+  OPENAI_API_KEY="sk-..."
+
+kubectl set env deployment/rag-service \\
+  OPENAI_API_KEY="sk-..."
+
+<span class="cmt"># pods auto-restart with the key</span>
+kubectl rollout status deployment/agents-service</code></pre></div>
+    <div class="callout co-win"><span class="co-tag">Better still</span><p>For production use a real <strong>Kubernetes Secret</strong> or AWS Secrets Manager, and reference it from the Deployment — so the value never appears in a command history either.</p></div>`
+  },
+  next_proxy: {
+    cat:"AWS · Networking", title:"The frontend proxy (why backend has no public URL)",
+    body:`<p>The browser runs <em>outside</em> the cluster, so it can't use internal names like <code class="inl">backend-gateway:8000</code>. The fix: the browser calls the frontend, and the Next.js server (which <em>is</em> inside the cluster) forwards the request.</p>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">app/api/chat/route.ts (Next.js proxy)</span></div><pre><code><span class="kw">export async function</span> POST(req) {
+  <span class="kw">const</span> body = <span class="kw">await</span> req.json();
+
+  <span class="cmt">// internal K8s DNS name — only the server can reach this</span>
+  <span class="kw">const</span> res = <span class="kw">await</span> fetch(
+    <span class="str">"http://backend-gateway:8000/api/chat"</span>,
+    { method: <span class="str">"POST"</span>, body: JSON.stringify(body) }
+  );
+
+  <span class="kw">return new</span> Response(res.body);
+}</code></pre></div>
+    <div class="callout co-win"><span class="co-tag">Why this matters</span><p>Only the frontend gets a public LoadBalancer. All 6 backend services stay private. One front door, no CORS headaches, one bill.</p></div>`
+  },
+  github_actions: {
+    cat:"CI/CD · GitHub Actions", title:"Automate build → ECR → EKS on every push",
+    body:`<p>Instead of running the commands by hand, this workflow does it automatically whenever you push to <code class="inl">main</code>.</p>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">.github/workflows/deploy.yml</span></div><pre><code><span class="kw">name</span>: Deploy to EKS
+<span class="kw">on</span>:
+  push:
+    branches: [ main ]
+
+<span class="kw">jobs</span>:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: \${{ secrets.AWS_KEY }}
+          aws-secret-access-key: \${{ secrets.AWS_SECRET }}
+          aws-region: us-east-1
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build &amp; push
+        run: |
+          REG=455254973218.dkr.ecr.us-east-1.amazonaws.com
+          docker build -t $REG/cancer-agent-frontend:latest ./frontend
+          docker push $REG/cancer-agent-frontend:latest
+
+      - name: Deploy
+        run: |
+          aws eks update-kubeconfig --name onco-cluster --region us-east-1
+          kubectl apply -f kubernetes/
+          kubectl rollout restart deployment/frontend</code></pre></div>
+    <div class="callout co-note"><span class="co-tag">Secrets</span><p>Store <code class="inl">AWS_KEY</code> and <code class="inl">AWS_SECRET</code> in GitHub → Settings → Secrets. Never in the YAML.</p></div>`
+  },
+  cleanup: {
+    cat:"AWS · Cost control", title:"Delete everything after class (saves the bill)",
+    body:`<p>EKS bills by the hour the cluster <em>exists</em>. The single most important habit: delete when done.</p>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">terminal · end of session</span></div><pre><code><span class="cmt"># kills control plane + nodes + load balancer together</span>
+eksctl delete cluster --name onco-cluster --region us-east-1
+
+<span class="cmt"># optional: clean ECR repos too</span>
+aws ecr delete-repository --repository-name cancer-agent-frontend \\
+  --force --region us-east-1</code></pre></div>
+    <div class="callout co-cost"><span class="co-tag">The trap that costs $160/mo</span><p>Forget to delete and the cluster runs all month. Set a phone alarm: <strong>"DELETE EKS CLUSTER."</strong></p></div>`
+  },
+  py_dockerfile: {
+    cat:"Step 1 · Dockerfile", title:"Python service Dockerfile (vs the Node one)",
+    body:`<p>Each backend service is its own FastAPI app with its own Dockerfile. Same shape as the frontend's Node Dockerfile, just Python-flavoured.</p>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">agents-service/Dockerfile</span></div><pre><code><span class="kw">FROM</span> python:3.11-slim      <span class="cmt"># version lives HERE</span>
+
+<span class="kw">WORKDIR</span> /app
+
+<span class="kw">COPY</span> requirements.txt .
+<span class="kw">RUN</span> pip install --no-cache-dir -r requirements.txt
+
+<span class="kw">COPY</span> . .
+
+<span class="kw">EXPOSE</span> 8002              <span class="cmt"># each service, different port</span>
+
+<span class="kw">CMD</span> ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8002"]</code></pre></div>
+    <table class="cmp"><tr><th>Step</th><th>Node</th><th>Python</th></tr>
+    <tr><td>Base / version</td><td>node:20-alpine</td><td>python:3.11-slim</td></tr>
+    <tr><td>Install deps</td><td>npm ci</td><td>pip install -r requirements.txt</td></tr>
+    <tr><td>Build</td><td>npm run build</td><td>(none)</td></tr>
+    <tr><td>Start</td><td>npm start</td><td>uvicorn main:app</td></tr></table>
+    <div class="callout co-trap"><span class="co-tag">Must-have</span><p><strong>--host 0.0.0.0</strong> — without it the container refuses outside traffic.</p></div>`
+  },
+  eks_connect: {
+    cat:"Step · Connect to EKS", title:"Point kubectl at EKS (the one new line)",
+    body:`<p>This is the <em>only</em> command that's different from local. It tells kubectl to talk to EKS instead of your Docker Desktop cluster.</p>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">terminal · laptop</span></div><pre><code><span class="cmt"># link kubectl to the EKS cluster</span>
+aws eks update-kubeconfig --name onco-cluster --region us-east-1
+
+<span class="cmt"># confirm the target</span>
+kubectl config current-context    <span class="cmt"># should show the EKS cluster</span>
+kubectl get nodes                 <span class="cmt"># EKS machines, Ready</span></code></pre></div>
+    <p>After this, every kubectl command goes to EKS. The deploy commands are then <strong>identical</strong> to local.</p>`
+  },
+  contexts: {
+    cat:"Clusters · Context", title:"Switching between multiple clusters",
+    body:`<p>kubectl talks to <strong>one cluster at a time</strong> — the "current context". With local + EKS, you switch between them.</p>
+    <div class="codeblock"><div class="cb-head"><span class="cb-title">terminal</span></div><pre><code>kubectl config get-contexts      <span class="cmt"># list all clusters (* = current)</span>
+kubectl config current-context   <span class="cmt"># which one am I on?</span>
+
+kubectl config use-context docker-desktop   <span class="cmt"># switch to local</span>
+kubectl config use-context onco-cluster      <span class="cmt"># switch to EKS</span></code></pre></div>
+    <div class="callout co-trap"><span class="co-tag">The dangerous mistake</span><p>Thinking you're on local but you're on EKS — then running <code class="inl">kubectl delete</code> on production. <strong>Always check current-context before important commands.</strong></p></div>
+    <div class="callout co-note"><span class="co-tag">Tip</span><p>Install <code class="inl">kubectx</code> to switch with just <code class="inl">kubectx onco-cluster</code>.</p></div>`
+  }
+};
+
+// ============ STAGE CONTENT ============
+const DATA = [
+{
+  id:"problem", tab:"01 · The Problem", num:"01",
+  title:"Why Deployment Is Hard",
+  kicker:"Before any tool, understand the problem. Two forces shape every deployment decision: traffic that grows, and failures that must not spread.",
+  body:`
+  <h3>Your app works on your laptop. Now what?</h3>
+  <p>Running an app for yourself is easy. The hard part is keeping it alive for <strong>thousands of users at once</strong>, on machines you can't physically touch, where things crash at 3am and must recover on their own. Deployment is the craft of making that happen.</p>
+  <p>Two pressures drive every choice in this whole story:</p>
+  <ul>
+    <li><strong>Traffic grows.</strong> Ten users is nothing. Ten thousand users hitting your app at the same moment will crush a single machine. You need to spread the load.</li>
+    <li><strong>Things break.</strong> A service will crash. A machine will die. The question is never "if" — it's "does the whole app go down with it, or does it heal?"</li>
+  </ul>
+  <h3>The two failures we're designing against</h3>
+  <div class="diagram">
+    <div class="box-row">
+      <div class="mbox"><div class="mb-t" style="color:var(--rose)">Failure A — Overload</div><div class="mb-d">One machine, too many users. It slows, then falls over. Everyone is affected.</div></div>
+      <div class="mbox"><div class="mb-t" style="color:var(--rose)">Failure B — Cascade</div><div class="mb-d">One service crashes and takes the entire app down with it. No isolation.</div></div>
+    </div>
+    <div class="dg-cap">The whole journey — Docker → Kubernetes → EKS — exists to solve these two</div>
+  </div>
+  <p>Keep these two in mind. <strong>Spreading load</strong> and <strong>surviving failure</strong> are the reasons every later tool exists. If a solution doesn't help with one of these, you don't need it yet.</p>
+  <div class="callout co-note"><span class="co-tag">The story we'll follow</span><p>We'll deploy a real app — <strong>OncoAgent</strong>, an AI assistant made of 6 services plus a database. We start with the simplest possible setup and only add complexity when traffic and failure force us to.</p></div>`
+},
+{
+  id:"simple", tab:"02 · The Simple Way", num:"02",
+  title:"Start Simple — S3 + EC2",
+  kicker:"When traffic is small, you don't need Kubernetes. The right first move is dead-simple: static frontend on S3, backend on a server, a load balancer in front.",
+  body:`
+  <h3>The low-traffic architecture</h3>
+  <p>If only a handful of people use your app, this is the correct, cheap, boring choice. Don't over-engineer.</p>
+  <div class="diagram">
+    <div class="flow">
+      <div class="node sky">User browser</div>
+      <span class="arrow">→</span>
+      <div class="node">S3<br><span style="font-size:11px;color:var(--ink-faint)">frontend files</span></div>
+      <span class="arrow">→</span>
+      <div class="node am">Load Balancer</div>
+      <span class="arrow">→</span>
+      <div class="node em">EC2<br><span style="font-size:11px;color:var(--ink-faint)">backend server</span></div>
+    </div>
+    <div class="dg-cap">Static files served from S3 · API logic on an EC2 machine · a load balancer in front</div>
+  </div>
+  <h4>Frontend → S3</h4>
+  <p>If your frontend is <strong>static</strong> (plain HTML/CSS/JS, or a site exported to static files), you don't need a running server for it. You upload the built files to an <strong>S3 bucket</strong>, and AWS serves them like any web page. Add CloudFront in front for speed and HTTPS. This is dirt cheap and scales to millions of visitors automatically.</p>
+  <h4>Backend → EC2</h4>
+  <p>Your backend has <em>logic</em> — it runs code, talks to a database, calls an LLM. That needs a live server. An <strong>EC2 instance</strong> is just a rented Linux machine in AWS. You run your backend on it, and it listens on a port.</p>
+  <h4>Load Balancer in front</h4>
+  <p>A <strong>load balancer</strong> sits between users and your backend. When traffic rises, you run the backend on 2–3 EC2 machines, and the load balancer spreads requests across them. It also stops sending traffic to a machine that has died.</p>
+  <table class="cmp">
+    <tr><th>Use this when</th><th>Don't use this when</th></tr>
+    <tr><td>Low / predictable traffic</td><td>Many services that must scale independently</td></tr>
+    <tr><td>Frontend is static</td><td>You need self-healing &amp; auto-scaling</td></tr>
+    <tr><td>You want lowest cost &amp; effort</td><td>You'll deploy updates many times a day</td></tr>
+    <tr><td>Small team, simple app</td><td>You want one portable setup across clouds</td></tr>
+  </table>
+  <div class="callout co-win"><span class="co-tag">Honest take</span><p>This setup is genuinely good for a real, small product. Most beginners jump to Kubernetes too early. <strong>Match the tool to the traffic.</strong></p></div>`
+},
+{
+  id:"breaks", tab:"03 · When It Breaks", num:"03",
+  title:"Why Simple Stops Working",
+  kicker:"S3 + EC2 is great until the app grows. Here's exactly where it cracks — and why those cracks point straight at containers and Kubernetes.",
+  body:`
+  <h3>The cracks appear</h3>
+  <ul>
+    <li><strong>No self-healing.</strong> If your backend process crashes on the EC2 box, it stays down until a human restarts it. At 3am, that's an outage.</li>
+    <li><strong>Scaling is manual and clumsy.</strong> More traffic means you log in, launch another EC2, install everything again, and hope the setup matches. Easy to get wrong.</li>
+    <li><strong>"Works on my machine."</strong> The EC2 has a slightly different OS, Python version, or library than your laptop — so the app behaves differently in production. Painful to debug.</li>
+    <li><strong>Many services = many headaches.</strong> OncoAgent has 6 services. Running each on its own EC2, wiring them together by IP, updating them one by one — it doesn't scale as a way of working.</li>
+  </ul>
+  <h3>What we actually want</h3>
+  <div class="diagram">
+    <div class="box-row">
+      <div class="mbox"><div class="mb-t">Identical everywhere</div><div class="mb-d">Same exact environment on laptop and cloud. No surprises.</div></div>
+      <div class="mbox"><div class="mb-t">Self-healing</div><div class="mb-d">A crashed service restarts itself, automatically.</div></div>
+      <div class="mbox"><div class="mb-t">Easy scaling</div><div class="mb-d">"Run 5 copies" should be one line, not an afternoon.</div></div>
+    </div>
+    <div class="dg-cap">These three wishes are exactly what containers + Kubernetes deliver</div>
+  </div>
+  <p>The first wish — <strong>identical everywhere</strong> — is solved by <strong>Docker</strong>. The other two — <strong>self-healing</strong> and <strong>easy scaling</strong> — are solved by <strong>Kubernetes</strong>. That's the whole rest of this deck.</p>`
+},
+{
+  id:"docker", tab:"04 · Docker", num:"04",
+  title:"Docker Fundamentals",
+  kicker:"Docker packages your app and everything it needs into one box that runs the same way everywhere. It's the foundation under Kubernetes.",
+  body:`
+  <h3>The core idea, in one line</h3>
+  <p><strong>Docker puts your app — plus its exact OS, libraries, and settings — into a sealed box called a container.</strong> That box runs identically on your laptop, your teammate's machine, and AWS. The "works on my machine" problem disappears.</p>
+  <h3>Image vs container — the key distinction</h3>
+  <div class="diagram">
+    <div class="flow">
+      <div class="node">Dockerfile<br><span style="font-size:11px;color:var(--ink-faint)">the recipe</span></div>
+      <span class="arrow">→</span>
+      <div class="node sky">Image<br><span style="font-size:11px;color:var(--ink-faint)">the frozen box</span></div>
+      <span class="arrow">→</span>
+      <div class="node em">Container<br><span style="font-size:11px;color:var(--ink-faint)">the running box</span></div>
+    </div>
+    <div class="dg-cap">A Dockerfile builds an image · running an image creates a container</div>
+  </div>
+  <div class="vocab-grid">
+    <div class="vocab"><div class="vt">Image</div><div class="vd">A frozen, read-only snapshot of your app + its environment. Like a class in code, or a cake recipe with all ingredients baked in.</div></div>
+    <div class="vocab"><div class="vt">Container</div><div class="vd">A live, running copy of an image. Like an object created from a class. You can run many containers from one image.</div></div>
+    <div class="vocab"><div class="vt">Dockerfile</div><div class="vd">A text file of steps that builds an image: base OS, install deps, copy code, set the start command.</div></div>
+    <div class="vocab"><div class="vt">Registry</div><div class="vd">A store for images. Docker Hub is the public one; AWS ECR is your private one. You push images up and pull them down.</div></div>
+    <div class="vocab"><div class="vt">docker-compose</div><div class="vd">A file that runs many containers together with one command, and lets them talk to each other by name.</div></div>
+    <div class="vocab"><div class="vt">Port mapping</div><div class="vd">Connecting a port inside the container to a port on the host, e.g. <code class="inl">-p 8000:8000</code>, so traffic can reach it.</div></div>
+  </div>
+  <h4>Open the code — Docker setup &amp; commands</h4>
+  <div class="code-cards">
+    <div class="code-card" onclick="openSnip('docker_install')"><span class="cc-ico">{ }</span><div><div class="cc-t">Install Docker on Mac</div><div class="cc-s">setup</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('docker_basics')"><span class="cc-ico">{ }</span><div><div class="cc-t">Core Docker commands</div><div class="cc-s">build · run · logs</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('dockerfile')"><span class="cc-ico">{ }</span><div><div class="cc-t">A real Dockerfile</div><div class="cc-s">FastAPI service</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('compose')"><span class="cc-ico">{ }</span><div><div class="cc-t">docker-compose.yml</div><div class="cc-s">many services</div></div><span class="cc-go">view →</span></div>
+  </div>`
+},
+{
+  id:"split", tab:"05 · One App → Many", num:"05",
+  title:"Splitting Into Services",
+  kicker:"OncoAgent began as one backend. We split it into 6 independent services plus a database. Here's why that split is the whole point of Kubernetes.",
+  body:`
+  <h3>Why split one app into many services?</h3>
+  <p>Go back to the two problems from Stage 01 — <strong>traffic</strong> and <strong>failure</strong>. Splitting solves both:</p>
+  <ul>
+    <li><strong>Scale only what's hot.</strong> If the RAG service is the bottleneck, run 5 copies of <em>just</em> that one — not the whole app. Cheaper and faster.</li>
+    <li><strong>Failures stay contained.</strong> If the tools service crashes, the frontend and gateway keep running. One broken part doesn't sink the ship.</li>
+    <li><strong>Update independently.</strong> Ship a fix to the agents service without rebuilding everything else.</li>
+  </ul>
+  <h3>OncoAgent — the real breakdown</h3>
+  <div class="diagram">
+    <div class="flow">
+      <div class="node sky">frontend<br><span style="font-size:11px;color:var(--ink-faint)">:3000</span></div>
+      <span class="arrow">→</span>
+      <div class="node">backend-gateway<br><span style="font-size:11px;color:var(--ink-faint)">:8000</span></div>
+      <span class="arrow">→</span>
+      <div class="node">orchestrator<br><span style="font-size:11px;color:var(--ink-faint)">:8001</span></div>
+      <span class="arrow">→</span>
+      <div class="node">agents<br><span style="font-size:11px;color:var(--ink-faint)">:8002</span></div>
+    </div>
+    <div class="flow" style="margin-top:12px">
+      <div class="node">tools<br><span style="font-size:11px;color:var(--ink-faint)">:8003</span></div>
+      <span class="arrow">→</span>
+      <div class="node">rag-service<br><span style="font-size:11px;color:var(--ink-faint)">:8004</span></div>
+      <span class="arrow">→</span>
+      <div class="node am">chromadb<br><span style="font-size:11px;color:var(--ink-faint)">vector DB</span></div>
+    </div>
+    <div class="dg-cap">7 components, each its own container — request flows frontend → gateway → orchestrator → agents → tools → rag → chromadb</div>
+  </div>
+  <h4>How services find each other</h4>
+  <p>This is the magic that carries all the way to the cloud: services call each other by <strong>name</strong>, not by IP address. The tools service calls <code class="inl">http://rag-service:8004</code>. It never needs to know which machine rag-service is on — the platform routes it. In docker-compose this works by the service name; in Kubernetes the same names work via internal DNS.</p>
+  <div class="code-cards">
+    <div class="code-card" onclick="openSnip('compose')"><span class="cc-ico">{ }</span><div><div class="cc-t">docker-compose for all 7</div><div class="cc-s">services talk by name</div></div><span class="cc-go">view →</span></div>
+  </div>
+  <div class="callout co-note"><span class="co-tag">Database note</span><p>Locally, ChromaDB stored files on disk. For a shared, networked setup we ran it as its own <strong>server container</strong> so multiple services could reach it at once over the network. Same data, now reachable by name.</p></div>`
+},
+{
+  id:"k8s", tab:"06 · Kubernetes", num:"06",
+  title:"Kubernetes Concepts",
+  kicker:"The heart of the deck. Kubernetes is a manager that runs many containers across many machines — restarting, scaling, and load-balancing them automatically.",
+  body:`
+  <h3>What Kubernetes actually is</h3>
+  <p>Docker runs <em>one</em> container. <strong>Kubernetes manages <em>many</em> containers</strong> — it decides where they run, restarts them when they crash, runs more copies when traffic rises, and load-balances between them. It's the automatic manager that solves "self-healing" and "easy scaling."</p>
+  <h3>Pods first, machines second</h3>
+  <p>A common confusion: "isn't Kubernetes all about many machines?" Partly. But its <strong>core job is managing pods</strong> — and that whole brain runs even on one machine. Many machines is just how production gets <em>scale</em> and <em>survival</em>. The skill you learn on one machine is the same skill.</p>
+  <div class="diagram">
+    <div class="box-row">
+      <div class="mbox"><div class="mb-t">The brain (core)</div><div class="mb-d">Deploy, restart, scale, heal, load-balance pods. Runs fully on minikube — one machine.</div></div>
+      <div class="mbox"><div class="mb-t">Many machines (add-on)</div><div class="mb-d">Production spreads pods across nodes so they survive hardware death and scale bigger.</div></div>
+    </div>
+    <div class="dg-cap">Learn the brain locally · the cloud just gives it more machines to work with</div>
+  </div>
+  <h3>The vocabulary you must know</h3>
+  <div class="vocab-grid">
+    <div class="vocab"><div class="vt">Pod</div><div class="vd">The smallest unit Kubernetes runs — a wrapper around one (or a few) containers. You scale by running more pods.</div></div>
+    <div class="vocab"><div class="vt">Deployment</div><div class="vd">A rule that says "keep N copies of this pod alive." If one dies, it makes a new one. This is self-healing.</div></div>
+    <div class="vocab"><div class="vt">Service</div><div class="vd">A stable name + address for a set of pods. Other services call the Service name; it load-balances to the pods behind it.</div></div>
+    <div class="vocab"><div class="vt">Node</div><div class="vd">A machine in the cluster. On minikube there's one node; on EKS there are several.</div></div>
+    <div class="vocab"><div class="vt">Control plane</div><div class="vd">The "brain" machine — schedules pods, watches health, heals. On EKS, AWS runs this for you (the hourly fee).</div></div>
+    <div class="vocab"><div class="vt">Worker node</div><div class="vd">The "muscle" machine that actually runs your app pods. On EKS these are the EC2 instances you pay for.</div></div>
+    <div class="vocab"><div class="vt">kubectl</div><div class="vd">The command you use to control any cluster. Same tool for minikube and EKS — only the target changes.</div></div>
+    <div class="vocab"><div class="vt">Manifest (YAML)</div><div class="vd">A file describing what you want — a Deployment, a Service, etc. You <code class="inl">kubectl apply</code> it and Kubernetes makes it real.</div></div>
+    <div class="vocab"><div class="vt">LoadBalancer</div><div class="vd">A Service type that gets a public URL from the cloud, so users outside the cluster can reach your app.</div></div>
+    <div class="vocab"><div class="vt">PVC</div><div class="vd">PersistentVolumeClaim — a request for disk that survives pod restarts. Databases need it.</div></div>
+  </div>
+  <h3>Brain vs muscle — the machine split</h3>
+  <div class="diagram">
+    <div class="box-row">
+      <div class="mbox"><div class="mb-t" style="color:var(--sky)">Control plane = brain</div><div class="mb-d">Schedules, watches, heals. On minikube it shares your one machine. On EKS, AWS runs it (~$0.10/hr).</div></div>
+      <div class="mbox"><div class="mb-t" style="color:var(--emerald)">Worker nodes = muscle</div><div class="mb-d">Run your actual pods. On minikube, your laptop. On EKS, EC2 machines you pay for.</div></div>
+    </div>
+    <div class="dg-cap">This is exactly why an EKS bill = control plane fee + worker node cost</div>
+  </div>
+  <h4>See the manifest</h4>
+  <div class="code-cards">
+    <div class="code-card" onclick="openSnip('k8s_deployment')"><span class="cc-ico">{ }</span><div><div class="cc-t">Deployment + Service YAML</div><div class="cc-s">explained line by line</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('kubectl_basics')"><span class="cc-ico">{ }</span><div><div class="cc-t">kubectl commands</div><div class="cc-s">the universal control</div></div><span class="cc-go">view →</span></div>
+  </div>`
+},
+{
+  id:"minikube", tab:"07 · minikube (local)", num:"07",
+  title:"Run Kubernetes Locally",
+  kicker:"minikube is real Kubernetes on your laptop — free, offline, perfect for learning and rehearsing. Everything you learn here transfers to EKS unchanged.",
+  body:`
+  <h3>What minikube is</h3>
+  <p><strong>minikube is a full Kubernetes cluster squeezed onto one machine.</strong> It runs the brain and the muscle together inside a single VM/container on your laptop. Same pods, same <code class="inl">kubectl</code>, same YAML as the cloud — just one node and zero cost.</p>
+  <p>Think of it as the practice kitchen: same tools and recipes as the real restaurant, but it's just for you. It's used for <strong>learning, local development, and testing</strong> — not for real production traffic, because one machine has no redundancy.</p>
+  <div class="diagram">
+    <div class="box-row">
+      <div class="mbox"><div class="mb-t">minikube</div><div class="mb-d">One machine. Brain + muscle together. Free. For dev &amp; learning.</div></div>
+      <div class="mbox"><div class="mb-t">EKS</div><div class="mb-d">Many machines. Brain managed by AWS. Paid. For production.</div></div>
+    </div>
+    <div class="dg-cap">Same Kubernetes underneath — only the number of machines differs</div>
+  </div>
+  <h3>The exact run sequence</h3>
+  <p>Order matters. The make-or-break step is pointing Docker at minikube's own engine <em>before</em> building, so the cluster can actually find your images.</p>
+  <div class="code-cards">
+    <div class="code-card" onclick="openSnip('minikube_run')"><span class="cc-ico">{ }</span><div><div class="cc-t">Full minikube sequence</div><div class="cc-s">install → start → deploy</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('kompose')"><span class="cc-ico">{ }</span><div><div class="cc-t">kompose convert</div><div class="cc-s">compose → K8s YAML</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('kubectl_basics')"><span class="cc-ico">{ }</span><div><div class="cc-t">kubectl essentials</div><div class="cc-s">deploy · watch · debug</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('k8s_deployment')"><span class="cc-ico">{ }</span><div><div class="cc-t">The deployment YAML</div><div class="cc-s">imagePullPolicy: Never</div></div><span class="cc-go">view →</span></div>
+  </div>
+  <h3>The 3 errors you WILL meet</h3>
+  <p>With many services, you'll hit at least one of these. Knowing them turns a scary live failure into a calm fix.</p>
+  <table class="cmp">
+    <tr><th>Error</th><th>Means</th><th>First fix</th></tr>
+    <tr><td>ImagePullBackOff</td><td>Image not found</td><td><code class="inl">eval $(minikube docker-env)</code> + rebuild</td></tr>
+    <tr><td>CrashLoopBackOff</td><td>App started, then crashed</td><td><code class="inl">kubectl logs &lt;pod&gt;</code></td></tr>
+    <tr><td>Can't reach service</td><td>Wrong service name / port</td><td><code class="inl">kubectl get svc</code> — check the name</td></tr>
+  </table>
+  <div class="callout co-trap"><span class="co-tag">Real bug we hit</span><p>The RAG service hung forever because it called ChromaDB on port <strong>8000</strong>, but the Kubernetes Service exposed it on <strong>8500</strong>. In compose, services share raw ports; in Kubernetes, traffic goes through the Service's port. Fix: set <code class="inl">CHROMA_PORT=8500</code>. <strong>Always read the logs before guessing.</strong></p></div>`
+},
+{
+  id:"vs", tab:"08 · Docker vs K8s · ECS vs EKS", num:"08",
+  title:"Choosing the Right Tool",
+  kicker:"Two comparisons that always come up: Docker vs Kubernetes (they're partners, not rivals), and ECS vs EKS (two ways to run containers on AWS).",
+  body:`
+  <h3>Docker vs Kubernetes — not a competition</h3>
+  <p>They work <em>together</em>. <strong>Docker builds and runs the box; Kubernetes manages many boxes.</strong> Kubernetes actually runs your Docker containers — it just adds the manager layer on top.</p>
+  <table class="cmp">
+    <tr><th>Need</th><th>Docker alone</th><th>Kubernetes</th></tr>
+    <tr><td>Run 1 container</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+    <tr><td>Auto-restart on crash</td><td class="no">✗</td><td class="yes">✓</td></tr>
+    <tr><td>Run many copies for load</td><td class="no">manual</td><td class="yes">✓</td></tr>
+    <tr><td>Zero-downtime update</td><td class="no">✗</td><td class="yes">✓</td></tr>
+    <tr><td>Spread across machines</td><td class="no">✗</td><td class="yes">✓</td></tr>
+  </table>
+  <p><strong>Docker builds the box. Kubernetes is the manager who runs many boxes, watches them, replaces dead ones, and shares the load.</strong></p>
+  <h3>ECS vs EKS — two AWS ways to run containers</h3>
+  <p>Both run your containers on AWS and both bill only while running. The difference is <em>what</em> orchestrator you use.</p>
+  <table class="cmp">
+    <tr><th></th><th>ECS</th><th>EKS</th></tr>
+    <tr><td>What it is</td><td>AWS's own container orchestrator</td><td>Managed Kubernetes</td></tr>
+    <tr><td>Control plane fee</td><td class="yes">none</td><td class="no">~$72/mo per cluster</td></tr>
+    <tr><td>Simplicity</td><td class="yes">simpler, fewer concepts</td><td>more concepts (pods, YAML)</td></tr>
+    <tr><td>Portability</td><td class="no">AWS-only</td><td class="yes">runs anywhere (any cloud, laptop)</td></tr>
+    <tr><td>Market skill</td><td>AWS-specific</td><td class="yes">industry-standard</td></tr>
+    <tr><td>Best for</td><td>AWS-only, cost-sensitive, simple</td><td>learning, portability, multi-cloud</td></tr>
+  </table>
+  <div class="callout co-note"><span class="co-tag">The decision rule</span><p>Building an AWS-only product and want cheap + simple → <strong>ECS</strong>. Learning, teaching, or want a portable skill that works on any cloud → <strong>EKS</strong>. For a Kubernetes class, EKS is correct — and the whole "same YAML on minikube and cloud" story only works <em>because</em> it's Kubernetes.</p></div>
+  <div class="callout co-cost"><span class="co-tag">Cost reality</span><p>For a few-hours demo the gap is tiny: ECS ≈ compute only (~$1–2); EKS ≈ compute + control plane (~$2.50–3). The extra ~$0.50 buys you portability. Both follow the same rule: <strong>delete when done.</strong></p></div>`
+},
+{
+  id:"eks", tab:"09 · Deploy to EKS", num:"09",
+  title:"Ship It to AWS EKS",
+  kicker:"The same files you ran on minikube now run on real cloud machines. Only two things change — and a few real bugs teach the rest.",
+  body:`
+  <h3>The whole flow</h3>
+  <div class="diagram">
+    <div class="flow">
+      <div class="node sky">push images<br><span style="font-size:11px;color:var(--ink-faint)">→ ECR</span></div>
+      <span class="arrow">→</span>
+      <div class="node">create cluster<br><span style="font-size:11px;color:var(--ink-faint)">eksctl</span></div>
+      <span class="arrow">→</span>
+      <div class="node">fix YAML<br><span style="font-size:11px;color:var(--ink-faint)">ECR URL + LB</span></div>
+      <span class="arrow">→</span>
+      <div class="node em">kubectl apply<br><span style="font-size:11px;color:var(--ink-faint)">same command</span></div>
+      <span class="arrow">→</span>
+      <div class="node am">get URL<br><span style="font-size:11px;color:var(--ink-faint)">test → delete</span></div>
+    </div>
+    <div class="dg-cap">Push → create → adjust → deploy → test → delete</div>
+  </div>
+  <h3>What changes from minikube — only two things</h3>
+  <ul>
+    <li><strong>Images live in ECR.</strong> EKS can't see your laptop. Each image's <code class="inl">image:</code> line becomes the full ECR URL, and you drop <code class="inl">imagePullPolicy: Never</code>.</li>
+    <li><strong>One public Service.</strong> The frontend Service becomes <code class="inl">type: LoadBalancer</code> so AWS hands you a public URL. The other 6 stay internal.</li>
+  </ul>
+  <h3>Two URLs people confuse</h3>
+  <table class="cmp">
+    <tr><th>URL</th><th>What it's for</th></tr>
+    <tr><td>ECR URI</td><td>Where the image is stored — EKS pulls from it. Not for users.</td></tr>
+    <tr><td>API server endpoint</td><td>How kubectl talks to the cluster brain. Admin only.</td></tr>
+    <tr><td>LoadBalancer URL</td><td>The real public address users hit. From <code class="inl">kubectl get svc</code>.</td></tr>
+  </table>
+  <h3>Internal DNS — why backends need no public URL</h3>
+  <p>All nodes share one big virtual private network. Inside it, <code class="inl">http://rag-service:8004</code> <em>is</em> the universal address — Kubernetes routes it to the right machine automatically. You only need a public URL for traffic coming from <strong>outside</strong> the cluster (the user's browser). That's why only the frontend is public, and the browser reaches the backend through a small proxy.</p>
+  <h4>All the code</h4>
+  <div class="code-cards">
+    <div class="code-card" onclick="openSnip('ecr_push')"><span class="cc-ico">{ }</span><div><div class="cc-t">Push images to ECR</div><div class="cc-s">the loop script</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('eks_create')"><span class="cc-ico">{ }</span><div><div class="cc-t">Create the cluster</div><div class="cc-s">eksctl</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('eks_deploy')"><span class="cc-ico">{ }</span><div><div class="cc-t">Deploy — what changes</div><div class="cc-s">ECR URL + LoadBalancer</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('next_proxy')"><span class="cc-ico">{ }</span><div><div class="cc-t">The frontend proxy</div><div class="cc-s">internal DNS</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('eks_storage')"><span class="cc-ico">{ }</span><div><div class="cc-t">Fix: DB stuck Pending</div><div class="cc-s">EBS CSI driver</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('eks_secret')"><span class="cc-ico">{ }</span><div><div class="cc-t">Inject the API key</div><div class="cc-s">secrets safely</div></div><span class="cc-go">view →</span></div>
+  </div>
+  <h3>The real bugs we hit (and what they teach)</h3>
+  <ul>
+    <li><strong>CORS blocked the call.</strong> Backend only allowed <code class="inl">localhost:3000</code>; the cloud URL was different. Lesson: the proxy approach avoids CORS entirely.</li>
+    <li><strong>Databases stuck Pending.</strong> Fresh EKS has no storage driver. Install the EBS CSI driver and use the <code class="inl">gp2</code> storage class.</li>
+    <li><strong>Agent said "401 Unauthorized."</strong> We'd stripped the OpenAI key from the YAML (GitHub blocked the secret). Fix: inject it into the running deployment, never commit it.</li>
+  </ul>
+  <div class="callout co-cost"><span class="co-tag">EKS cost — be precise</span><p>EKS bills <strong>per hour</strong>, not upfront. A 5-hour class ≈ <strong>$2.50–3</strong> (control plane $0.10/hr + nodes + load balancer). The dreaded <strong>$72/month</strong> only happens if you leave the cluster running 24/7 all month. <strong>Delete after class</strong> and your bill stays a few dollars. ECR pushing is free; storage is pennies.</p></div>
+  <div class="code-cards">
+    <div class="code-card" onclick="openSnip('cleanup')"><span class="cc-ico">{ }</span><div><div class="cc-t">Delete everything after</div><div class="cc-s">the bill-saver</div></div><span class="cc-go">view →</span></div>
+  </div>`
+},
+{
+  id:"cicd", tab:"10 · CI/CD", num:"10",
+  title:"Automate With GitHub Actions",
+  kicker:"Doing the build-push-deploy by hand is fine for learning. In real teams, a pipeline does it automatically on every push.",
+  body:`
+  <h3>What CI/CD means, plainly</h3>
+  <p><strong>CI/CD = automatically build, test, and ship your code when you push it.</strong> Instead of running the ECR and kubectl commands by hand every time, a robot (GitHub Actions) does the exact same steps for you the moment you push to <code class="inl">main</code>.</p>
+  <div class="diagram">
+    <div class="flow">
+      <div class="node sky">git push</div>
+      <span class="arrow">→</span>
+      <div class="node">build image</div>
+      <span class="arrow">→</span>
+      <div class="node">push to ECR</div>
+      <span class="arrow">→</span>
+      <div class="node em">deploy to EKS</div>
+    </div>
+    <div class="dg-cap">The pipeline runs these every time — no manual commands</div>
+  </div>
+  <h3>Why teams insist on it</h3>
+  <ul>
+    <li><strong>No human error.</strong> The same steps run identically every time — no forgotten command, no wrong tag.</li>
+    <li><strong>Fast, frequent releases.</strong> Push a fix, it's live in minutes, hands-free.</li>
+    <li><strong>Secrets stay out of code.</strong> AWS keys live in GitHub Secrets, injected only at run time.</li>
+  </ul>
+  <div class="code-cards">
+    <div class="code-card" onclick="openSnip('github_actions')"><span class="cc-ico">{ }</span><div><div class="cc-t">deploy.yml workflow</div><div class="cc-s">build → ECR → EKS</div></div><span class="cc-go">view →</span></div>
+  </div>
+  <div class="callout co-trap"><span class="co-tag">Security lesson</span><p>Never put AWS keys or API keys in your workflow file or your repo. GitHub's secret scanner will block the push — exactly what happened to us with the OpenAI key. Use <strong>GitHub Secrets</strong> and Kubernetes Secrets.</p></div>`
+},
+{
+  id:"summary", tab:"11 · Summary", num:"11",
+  title:"The Whole Picture",
+  kicker:"Everything in one place — the journey, the command cheat sheet, the costs, and the one-line mental models that make it all click.",
+  body:`
+  <h3>The journey in one breath</h3>
+  <p>Start simple — <strong>S3 + EC2 + load balancer</strong> when traffic is small. As the app grows into many services that must scale and survive failure, package each with <strong>Docker</strong>, manage them with <strong>Kubernetes</strong>, rehearse free on <strong>minikube</strong>, then ship to <strong>EKS</strong> — and finally automate it all with <strong>GitHub Actions</strong>.</p>
+  <h3>Mental models worth memorizing</h3>
+  <ul>
+    <li><strong>Docker builds the box; Kubernetes manages many boxes.</strong></li>
+    <li><strong>Kubernetes is about pods first, machines second.</strong> minikube teaches the full brain on one machine.</li>
+    <li><strong>Same kubectl, same YAML everywhere.</strong> Cloud only changes where images live and which Service is public.</li>
+    <li><strong>One front door.</strong> Only the frontend is public; backends talk by name on an internal network.</li>
+    <li><strong>Cloud orchestrators bill by the hour — always delete when done.</strong></li>
+  </ul>
+  <h3>Cost summary</h3>
+  <table class="cmp">
+    <tr><th>Item</th><th>Cost</th><th>Watch out</th></tr>
+    <tr><td>minikube</td><td class="yes">free</td><td>your laptop only</td></tr>
+    <tr><td>ECR push</td><td class="yes">free</td><td>storage ~pennies</td></tr>
+    <tr><td>EKS control plane</td><td>$0.10/hr (~$72/mo)</td><td>bills while cluster exists</td></tr>
+    <tr><td>Worker nodes</td><td>~$0.30–0.50/hr</td><td>size matters for many services</td></tr>
+    <tr><td>LoadBalancer</td><td>~$0.025/hr</td><td>one per public service</td></tr>
+    <tr><td><strong>5-hr class total</strong></td><td class="yes"><strong>~$2.50–3</strong></td><td><strong>delete after = stays tiny</strong></td></tr>
+  </table>
+  <h3>Command cheat sheet — open them all</h3>
+  <div class="code-cards">
+    <div class="code-card" onclick="openSnip('docker_basics')"><span class="cc-ico">{ }</span><div><div class="cc-t">Docker commands</div><div class="cc-s">build · run · logs</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('minikube_run')"><span class="cc-ico">{ }</span><div><div class="cc-t">minikube sequence</div><div class="cc-s">local Kubernetes</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('kubectl_basics')"><span class="cc-ico">{ }</span><div><div class="cc-t">kubectl commands</div><div class="cc-s">deploy · debug · scale</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('ecr_push')"><span class="cc-ico">{ }</span><div><div class="cc-t">ECR push loop</div><div class="cc-s">images to cloud</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('eks_create')"><span class="cc-ico">{ }</span><div><div class="cc-t">eksctl create cluster</div><div class="cc-s">build the cluster</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('cleanup')"><span class="cc-ico">{ }</span><div><div class="cc-t">Delete cluster</div><div class="cc-s">stop the bill</div></div><span class="cc-go">view →</span></div>
+  </div>
+  <div class="callout co-win"><span class="co-tag">You can now</span><p>Take any multi-service app from laptop to live cloud URL: containerize it, run it on Kubernetes locally, push to ECR, deploy to EKS, expose it through a load balancer, automate it with a pipeline — and control the cost. That's the full deployment skill.</p></div>`
+},
+{
+  id:"flow", tab:"12 · End-to-End Flow", num:"12",
+  title:"End-to-End Flow — Docker to EKS",
+  kicker:"The complete journey in the exact order it actually happens — split, containerize, run with compose, hit the wall, reason our way to Kubernetes, run it locally, then ship to EKS. Every clarification we worked through, in sequence.",
+  body:`
+  <h3 style="margin-bottom:6px">The 12 steps, start to finish</h3>
+  <p>Follow these top to bottom and you've deployed a real multi-service app from your laptop to the cloud.</p>
+
+  <h4>Step 1 · Split into independent services</h4>
+  <p>You had <strong>2 projects</strong> — frontend and backend. The backend splits by job, each becoming its own small <strong>FastAPI app</strong> with its own <code class="inl">main.py</code>, its own port, and its own Dockerfile.</p>
+  <div class="diagram">
+    <div class="box-row">
+      <div class="mbox"><div class="mb-t">frontend</div><div class="mb-d">Next.js · 3000</div></div>
+      <div class="mbox"><div class="mb-t">backend-gateway</div><div class="mb-d">FastAPI · 8000</div></div>
+      <div class="mbox"><div class="mb-t">orchestrator</div><div class="mb-d">LangGraph · 8001</div></div>
+    </div>
+    <div class="box-row" style="margin-top:10px">
+      <div class="mbox"><div class="mb-t">agents-service</div><div class="mb-d">FastAPI · 8002</div></div>
+      <div class="mbox"><div class="mb-t">tools-service</div><div class="mb-d">FastAPI · 8003</div></div>
+      <div class="mbox"><div class="mb-t">rag-service</div><div class="mb-d">FastAPI · 8004</div></div>
+    </div>
+    <div class="dg-cap">The rule: one service = one job that can scale or fail on its own</div>
+  </div>
+  <p>The one real code change: today your backend calls functions directly (<code class="inl">agents.run()</code>). After splitting, services are separate apps, so <strong>imports become HTTP calls</strong> — <code class="inl">requests.post("http://agents-service:8002/run", ...)</code>.</p>
+
+  <h4>Step 2 · Give each service a Dockerfile</h4>
+  <p>Every folder gets its own Dockerfile. Frontend uses a Node base; backends use a Python base. The <strong>version</strong> lives in the <code class="inl">FROM</code> line; the <strong>libraries</strong> live in <code class="inl">requirements.txt</code> which the Dockerfile installs.</p>
+  <div class="code-cards">
+    <div class="code-card" onclick="openSnip('py_dockerfile')"><span class="cc-ico">{ }</span><div><div class="cc-t">Python Dockerfile</div><div class="cc-s">vs the Node one</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('docker_basics')"><span class="cc-ico">{ }</span><div><div class="cc-t">Docker commands</div><div class="cc-s">build · run · logs</div></div><span class="cc-go">view →</span></div>
+  </div>
+
+  <h4>Step 3 · Tie them together with one docker-compose.yml</h4>
+  <p>One file at the project root lists every service and points to its folder. Then <strong>one command</strong> builds and runs the whole app. Inside compose, services reach each other by <strong>name</strong> — no IPs.</p>
+  <div class="code-cards">
+    <div class="code-card" onclick="openSnip('compose')"><span class="cc-ico">{ }</span><div><div class="cc-t">docker-compose.yml</div><div class="cc-s">all services, one command</div></div><span class="cc-go">view →</span></div>
+  </div>
+  <table class="cmp">
+    <tr><th>Compose option</th><th>What it does</th></tr>
+    <tr><td>build: ./folder</td><td>build using that folder's Dockerfile</td></tr>
+    <tr><td>container_name</td><td>fixed name (easy to spot in logs)</td></tr>
+    <tr><td>ports: "8000:8000"</td><td>laptop port → container port</td></tr>
+    <tr><td>environment</td><td>pass URLs/keys into the app</td></tr>
+    <tr><td>depends_on</td><td>start order (waits for start, not full readiness)</td></tr>
+  </table>
+  <div class="callout co-win"><span class="co-tag">Checkpoint</span><p><code class="inl">docker compose up -d --build</code> works — all services running on your machine. This proves the app is correct. Now the real question.</p></div>
+
+  <h4>Step 4 · Hit the wall — why compose isn't enough</h4>
+  <p>Compose is perfect... <strong>on one machine</strong>. That's the whole problem when traffic grows.</p>
+  <ul>
+    <li><strong>One machine = a ceiling.</strong> Big traffic maxes it out → slow → crash.</li>
+    <li><strong>No self-healing.</strong> A service dies at 3am → stays dead until you restart it.</li>
+    <li><strong>Can't scale one service.</strong> Only agents overloaded? Compose can't run 5 copies of just that.</li>
+    <li><strong>One machine dies = whole app dies.</strong> No backup.</li>
+  </ul>
+
+  <h4>Step 5 · Reason it out — why not just EC2 + Docker?</h4>
+  <p>You <em>can</em> run multiple EC2s with a load balancer. But we worked through the gaps:</p>
+  <div class="callout co-trap"><span class="co-tag">Clarification 1</span><p>A <strong>load balancer does NOT create machines</strong> — it only splits traffic across machines that already exist.</p></div>
+  <div class="callout co-trap"><span class="co-tag">Clarification 2</span><p>The thing that auto-spins-up EC2s is an <strong>Auto Scaling Group (ASG)</strong>, not the load balancer. And ASG scales the <strong>whole machine</strong> (heavy, ~1–2 min), not the container.</p></div>
+  <p>To auto-scale on EC2 you'd hand-wire a load balancer + ASG + launch template + health checks <em>per service</em>. That combo <strong>is basically a hand-built Kubernetes</strong> — more work, more cost, a full machine wasted per container.</p>
+  <table class="cmp">
+    <tr><th></th><th>EC2 + ASG (DIY)</th><th>Kubernetes</th></tr>
+    <tr><td>Scale unit</td><td class="no">whole machine (heavy)</td><td class="yes">container (light, seconds)</td></tr>
+    <tr><td>Heal a service</td><td class="no">machine-level only</td><td class="yes">per container</td></tr>
+    <tr><td>Scale ONE service</td><td class="no">hard</td><td class="yes">one line</td></tr>
+    <tr><td>Setup for 5 services</td><td class="no">5 ASGs + 5 templates + 5 LBs</td><td class="yes">1 cluster, YAML</td></tr>
+  </table>
+  <div class="callout co-win"><span class="co-tag">Conclusion</span><p>Kubernetes <em>is</em> that auto-manager, built in. That's why it makes sense — you stop hand-wiring scaling and healing.</p></div>
+
+  <h4>Step 6 · Get a local cluster (no minikube needed)</h4>
+  <p>kubectl is only a <strong>remote control</strong> — it needs a cluster to control. You always need <em>something</em> that provides the cluster. There is <strong>no standalone "kubernetes" package</strong> — it's a distributed system of many parts, so a tool assembles it for you.</p>
+  <p>Since you already have <strong>Docker Desktop</strong>, just enable its built-in Kubernetes — no minikube, no extra install:</p>
+  <ul>
+    <li>Docker Desktop → Settings → Kubernetes → tick <strong>Enable Kubernetes</strong> → Apply.</li>
+    <li>Install the control command: <code class="inl">brew install kubectl</code>.</li>
+    <li>Confirm: <code class="inl">kubectl get nodes</code> → shows <code class="inl">docker-desktop</code> Ready.</li>
+  </ul>
+  <div class="callout co-note"><span class="co-tag">No cluster commands</span><p>With Docker Desktop there are <strong>no minikube commands</strong>. The checkbox handles on/off; <strong>kubectl does everything else</strong>. Open the app at <code class="inl">localhost:3000</code> or use <code class="inl">kubectl port-forward</code>.</p></div>
+
+  <h4>Step 7 · Learn the tools — Docker builds, kubectl runs</h4>
+  <p>Two tools, two jobs: <strong>Docker</strong> builds images; <strong>kubectl</strong> runs and manages them on Kubernetes. The same kubectl works on Docker Desktop, minikube, and EKS — learn it once.</p>
+  <div class="code-cards">
+    <div class="code-card" onclick="openSnip('kubectl_basics')"><span class="cc-ico">{ }</span><div><div class="cc-t">Popular kubectl commands</div><div class="cc-s">apply · get · logs · scale</div></div><span class="cc-go">view →</span></div>
+  </div>
+
+  <h4>Step 8 · Understand what Kubernetes actually does</h4>
+  <p>You declare a goal; Kubernetes keeps reality matching it, forever. This is the <strong>desired-state</strong> model.</p>
+  <div class="vocab-grid">
+    <div class="vocab"><div class="vt">Runs &amp; heals</div><div class="vd">Creates pods, kills them, restarts crashed ones automatically.</div></div>
+    <div class="vocab"><div class="vt">Scales</div><div class="vd">Runs N copies you ask for; auto-scales on load; adds machines when needed.</div></div>
+    <div class="vocab"><div class="vt">Schedules</div><div class="vd">Decides which machine each pod runs on; moves pods if a machine dies.</div></div>
+    <div class="vocab"><div class="vt">Networks</div><div class="vd">Stable name per service (internal DNS), routes &amp; load-balances traffic.</div></div>
+    <div class="vocab"><div class="vt">Updates</div><div class="vd">Rolling updates with zero downtime; rollback if a version breaks.</div></div>
+    <div class="vocab"><div class="vt">Config</div><div class="vd">Injects env vars, manages secrets and storage volumes.</div></div>
+  </div>
+
+  <h4>Step 9 · The two files per service — Deployment + Service</h4>
+  <p>kompose generates two YAMLs per service. You need <strong>both</strong>, because they do different jobs.</p>
+  <table class="cmp">
+    <tr><th>File</th><th>Job</th><th>Analogy</th></tr>
+    <tr><td>Deployment</td><td>runs + heals the pods (the muscle)</td><td>the people working</td></tr>
+    <tr><td>Service</td><td>stable name + routing (the address)</td><td>the office phone number</td></tr>
+  </table>
+  <p>Why two? Because <strong>pods are temporary but the name must be permanent</strong>. Pods die and restart with new IPs constantly; the Service gives a fixed name that never changes, so other services always reach it.</p>
+  <div class="code-cards">
+    <div class="code-card" onclick="openSnip('k8s_deployment')"><span class="cc-ico">{ }</span><div><div class="cc-t">Deployment + Service YAML</div><div class="cc-s">the two files explained</div></div><span class="cc-go">view →</span></div>
+  </div>
+  <p>The fields you'll actually edit in a Deployment: <code class="inl">replicas</code> (how many pods), <code class="inl">image</code>, <code class="inl">imagePullPolicy</code> (Never local / Always cloud), <code class="inl">env</code> (keys + service URLs), <code class="inl">containerPort</code>.</p>
+  <div class="callout co-note"><span class="co-tag">Key realisation</span><p>The <code class="inl">kubernetes/</code> folder is just your <strong>docker-compose, but for pods</strong>. You declare the rule; Kubernetes creates and maintains the pods. The YAML files <strong>stay in your repo</strong> — they are never "uploaded" to the cluster. <code class="inl">kubectl apply</code> reads them locally and sends the instructions.</p></div>
+
+  <h4>Step 10 · Run it locally</h4>
+  <p>With the local cluster on, deploy the whole folder and watch pods come alive — all from your laptop terminal.</p>
+  <div class="codeblock"><div class="cb-head"><span class="cb-title">terminal · laptop</span></div><pre><code><span class="cmt"># build images so the cluster can see them</span>
+docker compose build
+
+<span class="cmt"># deploy every YAML in the folder</span>
+kubectl apply <span class="flg">-f</span> kubernetes/
+
+<span class="cmt"># watch until Running</span>
+kubectl get pods <span class="flg">-w</span></code></pre></div>
+
+  <h4>Step 11 · Service URLs — set by name, not by you</h4>
+  <p>You never assign URLs. Services call each other by <strong>name</strong> — <code class="inl">http://tools-service:8003</code> — and Kubernetes' internal DNS routes it to the live pod, even after restarts.</p>
+  <div class="callout co-trap"><span class="co-tag">Correction we made</span><p>EKS does <strong>not</strong> hand each service a dynamic public URL. The opposite — it gives stable <strong>internal names</strong>. Only the <strong>one</strong> service you mark <code class="inl">type: LoadBalancer</code> (the frontend) gets a public URL. These names are <strong>identical</strong> local and cloud, so you change nothing.</p></div>
+
+  <h4>Step 12 · Ship to EKS — same kubectl, new target</h4>
+  <p>EKS is the same Kubernetes on real AWS servers. The journey: push images to ECR, create the cluster, point kubectl at it, then the <strong>exact same</strong> apply/get commands.</p>
+  <div class="diagram">
+    <div class="flow">
+      <div class="node sky">push → ECR</div><span class="arrow">→</span>
+      <div class="node">create cluster</div><span class="arrow">→</span>
+      <div class="node am">update-kubeconfig</div><span class="arrow">→</span>
+      <div class="node em">kubectl apply</div><span class="arrow">→</span>
+      <div class="node">get URL → delete</div>
+    </div>
+    <div class="dg-cap">Only the middle step (point kubectl at EKS) is new — the rest is identical to local</div>
+  </div>
+  <div class="code-cards">
+    <div class="code-card" onclick="openSnip('ecr_push')"><span class="cc-ico">{ }</span><div><div class="cc-t">Push images to ECR</div><div class="cc-s">images go up; YAML stays local</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('eks_create')"><span class="cc-ico">{ }</span><div><div class="cc-t">Create the EKS cluster</div><div class="cc-s">eksctl</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('eks_connect')"><span class="cc-ico">{ }</span><div><div class="cc-t">Point kubectl at EKS</div><div class="cc-s">the one new line</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('eks_deploy')"><span class="cc-ico">{ }</span><div><div class="cc-t">Deploy — what changes</div><div class="cc-s">ECR URL + LoadBalancer</div></div><span class="cc-go">view →</span></div>
+  </div>
+  <p>You run these from your <strong>laptop terminal</strong> — kubectl controls EKS remotely, like a remote control for a TV across the room. You never log into the cluster.</p>
+  <div class="callout co-trap"><span class="co-tag">Multiple clusters</span><p>kubectl talks to <strong>one cluster at a time</strong> (the current context). With local + EKS, always check before any important command — running <code class="inl">kubectl delete</code> on the wrong context can wipe production.</p></div>
+  <div class="code-cards">
+    <div class="code-card" onclick="openSnip('contexts')"><span class="cc-ico">{ }</span><div><div class="cc-t">Switch clusters safely</div><div class="cc-s">context commands</div></div><span class="cc-go">view →</span></div>
+    <div class="code-card" onclick="openSnip('cleanup')"><span class="cc-ico">{ }</span><div><div class="cc-t">Delete after class</div><div class="cc-s">stop the bill</div></div><span class="cc-go">view →</span></div>
+  </div>
+
+  <h3>The single sentence that holds it all</h3>
+  <div class="callout co-win"><span class="co-tag">The whole flow</span><p><strong>Split into services → Dockerfile each → compose to prove it works → containers + ASG would be hand-built Kubernetes, so use Kubernetes → get a local cluster (Docker Desktop) → write Deployment + Service per service → kubectl apply locally → point kubectl at EKS → same commands ship it to the cloud.</strong> Docker builds the boxes; kubectl runs them; the cluster is the only thing that changes between laptop and cloud.</p></div>`
+}
+];
+
+// ============ RENDER ============
+const tabBar = document.getElementById('tabBar');
+const main = document.getElementById('main');
+
+DATA.forEach((s, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'tab-btn' + (i===0?' active':'');
+  btn.textContent = s.tab;
+  btn.onclick = () => showTab(i);
+  tabBar.appendChild(btn);
+
+  const panel = document.createElement('section');
+  panel.className = 'tab-panel' + (i===0?' active':'');
+  panel.id = 'panel-'+i;
+  panel.innerHTML = `
+    <div class="stage">
+      <div class="container">
+        <div class="stage-header">
+          <div class="stage-num-big">${s.num}</div>
+          <div>
+            <div class="stage-title">${s.title}</div>
+            <div class="stage-kicker">${s.kicker}</div>
+          </div>
+        </div>
+        <div class="body-wrap">
+          <div class="spacer"></div>
+          <div class="prose">${s.body}</div>
+        </div>
+      </div>
+    </div>`;
+  main.appendChild(panel);
+});
+
+function showTab(i){
+  document.querySelectorAll('.tab-btn').forEach((b,idx)=>b.classList.toggle('active',idx===i));
+  document.querySelectorAll('.tab-panel').forEach((p,idx)=>p.classList.toggle('active',idx===i));
+  window.scrollTo({top: document.querySelector('.tabs').offsetTop - 4, behavior:'smooth'});
+}
+
+// ============ MODAL ============
+const overlay = document.getElementById('overlay');
+const mCat = document.getElementById('mCat');
+const mQ = document.getElementById('mQ');
+const mBody = document.getElementById('mBody');
+
+function openSnip(key){
+  const s = SNIPPETS[key];
+  if(!s) return;
+  mCat.textContent = s.cat;
+  mQ.textContent = s.title;
+  mBody.innerHTML = s.body;
+  overlay.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeModal(){
+  overlay.classList.remove('open');
+  document.body.style.overflow='';
+}
+document.getElementById('closeBtn').onclick = closeModal;
+overlay.onclick = e => { if(e.target===overlay) closeModal(); };
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+</script>
+</body>
+</html>
